@@ -1,0 +1,43 @@
+﻿@{
+    ViewBag.Title = "Index";
+    bool success = ViewBag.Success;
+    string msg = null;
+    List<FileDownloadAndUpload.Models.File> files = null;
+    if (success)
+    {
+        files = ViewBag.Files;
+
+    }
+    else
+    {
+        msg = ViewBag.Message;
+
+    }
+}
+@{
+    if (success)
+    {
+        <p>上传成功</p>
+        if (files != null)
+        {
+            <ul>
+
+                @foreach (var item in files)
+                {
+                <li>文件名称:@item.Name</li>
+                }
+            </ul>
+
+        }
+
+    }
+    else
+    {
+        <p>
+            上传失败 :
+            <br />
+            @msg;
+
+        </p>
+    }
+}

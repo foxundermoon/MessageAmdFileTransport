@@ -1,0 +1,3002 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using ESRI.ArcGIS.Controls;
+using ESRI.ArcGIS.Geometry;
+using ESRI.ArcGIS.Carto;
+using ESRI.ArcGIS.Display;
+using ESRI.ArcGIS.Geodatabase;
+using ESRI.ArcGIS.DataSourcesFile;
+using ESRI.ArcGIS.esriSystem;
+using ESRI.ArcGIS.DataSourcesGDB;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using System.Xml;
+using agsXMPP.Xml.Dom;
+using agsXMPP.protocol.component;
+using agsXMPP.protocol.client;
+using agsXMPP;
+using System.Security.Cryptography;
+using System.IO;
+
+
+
+namespace MapDevGisFrame.Plugs.PlugPatrolTask
+{
+    public class ReceiveGPS
+    {
+        public MapDevGisFrame.PlugInterface.IHost _host;
+        public string strTaskID = "";
+        public List<string> lstGPS = new List<string>();
+        public List<string> lstGPSTime = new List<string>();
+        public string GPSInfo = "";
+        public string strX = "";
+        public string strY = "";
+        public string strTime = "";
+        public bool boolstartGPS = true;
+        public void Init(string strTask, string zuobiaoX, string zuobiaoY, string Time)
+        {
+            if (strTaskID == strTask)
+            {
+                strX = zuobiaoX;
+                strY = zuobiaoY;
+                strTime = Time;
+                string Gpsinfo = zuobiaoX + "," + zuobiaoY + "," + Time + ";";
+                lstGPSTime.Add(Time);
+                lstGPS.Add(Gpsinfo);
+            }
+            if (lstGPS.Count > 99)
+            {
+                lstGPSTime.Sort();
+                string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_巡检点表", "最大值");
+                if (strVal == "")
+                    strVal = "0";
+                int iVal = Convert.ToInt32(strVal) + 1;
+                for (int i = 0; i < lstGPS.Count; i++)
+                {
+                    GPSInfo = GPSInfo + lstGPS[i];
+                }
+                string strInsert = "insert into " + _host.PrjCod + "专题_巡检_巡检点表(ID,任务ID,GPS信息,开始时间,结束时间) values (" + iVal + ",'" + strTask + "','" + GPSInfo + "','" + lstGPSTime[0] + "','" + lstGPSTime[lstGPSTime.Count - 1] + "')";
+                _host.DataConnection.ExcuteCommand(strInsert);
+                GPSInfo = "";
+                lstGPSTime.Clear();
+                lstGPS.Clear();
+            }
+        }
+        public void StopGPS()
+        {
+            if (lstGPS != null)
+            {
+                lstGPSTime.Sort();
+                string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_巡检点表", "最大值");
+                if (strVal == "")
+                    strVal = "0";
+                int iVal = Convert.ToInt32(strVal) + 1;
+                string strGPSinfo = "";
+                for (int i = 0; i < lstGPS.Count; i++)
+                {
+                    strGPSinfo = strGPSinfo + lstGPS[i];
+                }
+                string strInsert = "insert into " + _host.PrjCod + "专题_巡检_巡检点表(ID,任务ID,GPS信息,开始时间,结束时间) values (" + iVal + ",'" + strTaskID + "','" + strGPSinfo + "','" + lstGPSTime[0] + "','" + lstGPSTime[lstGPSTime.Count - 1] + "')";
+                _host.DataConnection.ExcuteCommand(strInsert);
+                lstGPSTime.Clear();
+                lstGPS.Clear();
+            }
+        }
+    }
+    public class PlugPatrolTask : MapDevGisFrame.PlugInterface.IPlugin
+    {
+        MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = null;
+        DevExpress.XtraBars.Ribbon.RibbonPage ribbonPage = null;
+        DevExpress.XtraBars.BarSubItem _menu;
+        List<DevExpress.XtraBars.BarItem> _menuItems = new List<DevExpress.XtraBars.BarItem>();
+        public String strCurrentCommand;
+
+        ESRI.ArcGIS.Carto.IElement _pEleCar = null;
+        ESRI.ArcGIS.Display.INewLineFeedback _pNewLinFB = null;
+        private IEngineEditor m_engineEditor = new EngineEditor();
+        public List<String> _lstCustomSelLines = new List<string>();
+
+        int iCurrentID = -1;
+        double _dPreX = 0;
+        double _dPreY = 0;
+
+
+        public string strMessage = "test";
+        static System.Windows.Forms.Timer timer;
+        static object mylock = new object();
+
+        //frmPatrolTaskBrows _frmPatrolTaskBrows = null;
+        frmPatrolWayBrows _frmPatrolWayBrows = null;
+        frmPatrolTaskBrows _frmPatrolTaskBrows = null;
+        int h = 0;
+        frmNodeInfo frm = null;
+        frmLineInfo lineinfo = null;
+        PersonManager _PersonManager = null;
+        Constantset _Constantset = null;
+        Daypatrol _Daypatrol = null;
+        frmRealtimeMonitoring _frmRealtimeMonitoring = null;
+        frmHistoryPlayback _frmHistoryPlayback = null;
+        frmFaultPlayback _frmFaultPlayback = null;
+        Daypressure _Daypressure = null;
+        DayHazards _DayHazards = null;
+        UserReport _UserReport = null;
+        YinHuanset _YinHuanset = null;
+        public ManageTrouble _ManageTrouble = null;
+        TroubleAnalysic _TroubleAnalysic = null;
+        public ManageNewPressure _ManageNewPressure = null;
+        TerminalNote _TerminalNote = null;
+        DevExpress.XtraBars.PopupMenu popupMenuSubLayers = null;
+        public DevExpress.XtraBars.Docking.DockPanel _panelJingBao = null;
+        public DevExpress.XtraBars.Docking.DockPanel _panelOnLine = null;
+
+        Alarmlabel _Alarmlabel = null;
+        OnLinePeople _OnLinePeople = null;
+        List<IPoint> lstPoint = new List<IPoint>();
+        List<IPoint> lstSnapPoint = new List<IPoint>();
+        int iWayID = 0;
+        Thread myThread = null;
+
+
+        public String strServerIP = "10.80.5.107";//"10.80.5.166";
+        public int iServerPort = 803;
+
+
+
+        private ManualResetEvent allDone = new ManualResetEvent(false);
+        private Socket listener;
+        private bool m_Listening;
+        //PatrolSocketServerManager _PatrolsocketServer = null;
+        String _name;
+        String _author;
+        String _buildDate;
+        String _despription;
+        String _version;
+        MapDevGisFrame.PlugInterface.IHost _host;
+        List<string> lstOnLine = new List<string>();
+        public List<ReceiveGPS> lstReceiveGPS = new List<ReceiveGPS>();
+        List<string> lstTaskID = new List<string>();
+        #region 基本属性
+        public String Name
+        {
+            get { return _name; }
+        }
+        public String Author
+        {
+            get { return _author; }
+        }
+        public String BuildDate
+        {
+            get { return _buildDate; }
+        }
+        public String Description
+        {
+            get { return _despription; }
+        }
+        public String Version
+        {
+            get { return _version; }
+        }
+        #endregion
+        //public CustomOnSelect OnCustomSelect;
+        public delegate void deletetePrecessUserPresenceType(String strUserName, PresenceType preType);
+        public delegate void deletetePrecessMessage(agsXMPP.protocol.client.Message msg, SWXMPPServer.swMessage swm);
+        public delegate void deletetePrecessFileMessage(agsXMPP.protocol.client.Message msg, SWXMPPServer.swFileMessage swm);
+        public PlugPatrolTask()
+        {
+            _author = "MapDev";
+            _despription = "巡检任务";
+            _name = "巡检任务";
+            _version = "2.0.0";
+            _buildDate = "2009-12-15";
+
+        }
+        public bool Initialize()
+        {
+            //_PatrolsocketServer = new PatrolSocketServerManager();
+            //_PatrolsocketServer.Host = _host;
+            //_PatrolsocketServer._pParent = this;
+            //_PatrolsocketServer.StartListen();
+            if (_host.UIRibbon)
+            {
+                agsXMPP.Factory.ElementFactory.AddElementType("swMessage", "com.example.swsocketclient.swMessage", typeof(SWXMPPServer.swMessage));
+                agsXMPP.Factory.ElementFactory.AddElementType("swFileMessage", "com.example.swsocketclient.swFileMessage", typeof(SWXMPPServer.swFileMessage));
+
+                #region 新方式显示
+                popupMenuSubLayers = new DevExpress.XtraBars.PopupMenu();
+                popupMenuSubLayers.Name = "popupMenuSubLayers";
+                try
+                {
+                    ribbonPage = new DevExpress.XtraBars.Ribbon.RibbonPage();
+                    ribbonPage.Name = "pluginPatralTask" + _name;
+                    ribbonPage.Text = _name;
+                    int iStart = _host.CustomPageStart;
+                    if (iStart < 0)
+                        iStart = _host.BarMainRibbonControl.Pages.Count - 1;
+                    _host.BarMainRibbonControl.Pages.Insert(iStart, ribbonPage);
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+
+
+                DevExpress.XtraBars.Ribbon.RibbonPageGroup pageGroupViewNew = null;
+                pageGroupViewNew = new DevExpress.XtraBars.Ribbon.RibbonPageGroup();
+                pageGroupViewNew.Name = "pluginPatrolGroupNew巡检管理";
+                pageGroupViewNew.Text = "巡检管理";
+                ribbonPage.Groups.Add(pageGroupViewNew);
+
+
+
+                {
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "线路定制";
+                        barButtonItem1.Name = "pluginmnu" + _name + "巡检";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.线路制定.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "线路浏览";
+                        barButtonItem1.Name = "pluginmnu" + _name + "巡检";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.线路浏览1.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "下达任务";
+                        barButtonItem1.Name = "pluginmnu" + _name + "巡检";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.下达任务.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "隐患管理";
+                        barButtonItem1.Name = "pluginmnu" + _name + "隐患管理";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.隐患报表.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "隐患分析";
+                        barButtonItem1.Name = "pluginmnu" + _name + "隐患分析";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.隐患报表.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "压力信息管理";
+                        barButtonItem1.Name = "pluginmnu" + _name + "压力信息管理";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewNew.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.调压箱统计.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                }
+                DevExpress.XtraBars.Ribbon.RibbonPageGroup pageGroupViewJKong = null;
+                pageGroupViewJKong = new DevExpress.XtraBars.Ribbon.RibbonPageGroup();
+                pageGroupViewJKong.Name = "pluginPatrolGroupJKong实时监控";
+                pageGroupViewJKong.Text = "实时监控";
+                ribbonPage.Groups.Add(pageGroupViewJKong);
+                {
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "实时监控";
+                        barButtonItem1.Name = "pluginmnu" + _name + "实时监控";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewJKong.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.实时监控.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "实时监控，选择任务浏览的实时监控按钮，\n在地图上绘制具体当前选中任务的实时巡检路线。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "轨迹回放";
+                        barButtonItem1.Name = "pluginmnu" + _name + "轨迹回放";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewJKong.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.轨迹回放.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "故障回放";
+                        barButtonItem1.Name = "pluginmnu" + _name + "故障回放";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewJKong.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.轨迹回放.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+                }
+
+
+                DevExpress.XtraBars.Ribbon.RibbonPageGroup pageGroupViewPatrol = null;
+                pageGroupViewPatrol = new DevExpress.XtraBars.Ribbon.RibbonPageGroup();
+                pageGroupViewPatrol.Name = "pluginPatrolGroupPatrol巡检报表";
+                pageGroupViewPatrol.Text = "巡检报表";
+                ribbonPage.Groups.Add(pageGroupViewPatrol);
+
+
+
+                {
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "巡检报表";
+                        barButtonItem1.Name = "pluginmnu" + _name + "巡检报表";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewPatrol.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.巡检日报.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "隐患报表";
+                        barButtonItem1.Name = "pluginmnu" + _name + "隐患报表";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewPatrol.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.隐患报表.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "压力报表";
+                        barButtonItem1.Name = "pluginmnu" + _name + "压力报表";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewPatrol.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.压力报表.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "人员考勤";
+                        barButtonItem1.Name = "pluginmnu" + _name + "人员考勤";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewPatrol.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.人员考勤.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+
+                }
+
+                DevExpress.XtraBars.Ribbon.RibbonPageGroup pageGroupViewTixing = null;
+                pageGroupViewTixing = new DevExpress.XtraBars.Ribbon.RibbonPageGroup();
+                pageGroupViewTixing.Name = "pluginPatrolGroupTixing隐患提醒";
+                pageGroupViewTixing.Text = "隐患提醒";
+                ribbonPage.Groups.Add(pageGroupViewTixing);
+                {
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "开启";
+                        barButtonItem1.Name = "pluginmnu" + _name + "开启";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewTixing.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.开启.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "关闭";
+                        barButtonItem1.Name = "pluginmnu" + _name + "关闭";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewTixing.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.关闭.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                    }
+                }
+                DevExpress.XtraBars.Ribbon.RibbonPageGroup pageGroupViewsystemset = null;
+                pageGroupViewsystemset = new DevExpress.XtraBars.Ribbon.RibbonPageGroup();
+                pageGroupViewsystemset.Name = "pluginPatrolGroupsystemset巡检设置";
+                pageGroupViewsystemset.Text = "巡检设置";
+                ribbonPage.Groups.Add(pageGroupViewsystemset);
+                {
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "常量设置";
+                        barButtonItem1.Name = "pluginmnu" + _name + "常量设置";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewsystemset.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.用户管理.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "隐患配置";
+                        barButtonItem1.Name = "pluginmnu" + _name + "隐患配置";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewsystemset.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.用户管理.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                    }
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "巡检人员管理";
+                        barButtonItem1.Name = "pluginmnu" + _name + "巡检人员管理";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewsystemset.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.用户管理.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                    }
+
+                    {
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "终端日志";
+                        barButtonItem1.Name = "pluginmnu" + _name + "终端登录日志";
+                        barButtonItem1.RibbonStyle = DevExpress.XtraBars.Ribbon.RibbonItemStyles.Large;
+                        _host.BarMainRibbonControl.Items.Add(barButtonItem1);
+                        pageGroupViewsystemset.ItemLinks.Add(barButtonItem1);
+                        _menuItems.Add(barButtonItem1);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+
+                        DevExpress.Utils.ImageCollection imlst = (DevExpress.Utils.ImageCollection)_host.BarMainRibbonControl.Images;
+                        if (imlst != null)
+                        {
+                            int iIndex = imlst.Images.Count;
+                            imlst.Images.Add(MapDevGisFrame.Plugs.PlugPatrolTask.Properties.Resources.巡检日志.ToBitmap());
+                            barButtonItem1.ImageIndex = iIndex;
+                            barButtonItem1.ImageIndexDisabled = iIndex;
+
+                        }
+                        //{
+                        //    DevExpress.Utils.SuperToolTip superToolTip1 = new DevExpress.Utils.SuperToolTip();
+                        //    DevExpress.Utils.ToolTipTitleItem toolTipTitleItem1 = new DevExpress.Utils.ToolTipTitleItem();
+                        //    toolTipTitleItem1.Text = "下达任务，可以点击<图上选\n择设置>按钮，在地图上选择具体路线，\n选中后信息会自动填充到窗体中，\n可以设置任务下达人，任务执行人，下达\n时间，指定工期等信息，还可实现对信息\n进行预览，打印出巡检任务单等功能。";
+                        //    superToolTip1.Items.Add(toolTipTitleItem1);
+                        //    barButtonItem1.SuperTip = superToolTip1;
+                        //}
+                    }
+                    _panelOnLine = _host.BockManager.AddPanel(DevExpress.XtraBars.Docking.DockingStyle.Float);
+                    //_panelOnLine.ClosedPanel += new DevExpress.XtraBars.Docking.DockPanelEventHandler(_panelOnLine_ClosedPanel);
+                    _panelOnLine.Name = "plugpanel-users";
+                    _panelOnLine.Text = "在线巡检人员";
+                    _panelOnLine.ID = new System.Guid("5e91cc69-9e69-4a12-86d9-893b7e28d979");
+                    _panelOnLine.Dock = DevExpress.XtraBars.Docking.DockingStyle.Bottom;
+                    _panelOnLine.Dock = DevExpress.XtraBars.Docking.DockingStyle.Right;
+                    _panelOnLine.Height = 50;
+                    _panelOnLine.Width = 200;
+                    //MessageBox.Show((System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width - 200).ToString());
+                    //MessageBox.Show((System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height - 60).ToString());
+                    //_panelOnLine.Location = new System.Drawing.Point(100,100);
+
+                    //_panelOnLine.Visibility = DevExpress.XtraBars.Docking.DockVisibility.Visible;
+
+                    _OnLinePeople = new OnLinePeople();
+                    _OnLinePeople.Dock = System.Windows.Forms.DockStyle.Fill;
+                    //_OnLinePeople.Location = new System.Drawing.Point(0, 0);
+                    _OnLinePeople.Name = "mapDevControlUsers";
+                    _OnLinePeople.TabIndex = 0;
+                    _OnLinePeople.Host = _host;
+                    _OnLinePeople._pParent = this;
+                    _OnLinePeople.getTreeview();
+                    _panelOnLine.ControlContainer.Controls.Add(_OnLinePeople);
+
+
+
+
+
+
+                }
+
+                #endregion
+
+                //获取IP与端口
+                string strIP = "select * from " + _host.PrjCod + "专题_巡检_常量配置表 where 常量名称='服务端IP'";
+                strServerIP = _host.DataConnection.GetFldValue(strIP, "常量内容");
+                string strPort = "select * from  " + _host.PrjCod + "专题_巡检_常量配置表 where 常量名称='端口号'";
+                string ServerPort = _host.DataConnection.GetFldValue(strPort, "常量内容");
+                iServerPort = Convert.ToInt32(ServerPort);
+                this.Start();
+            }
+            else
+            {
+                #region 旧方式显示
+                int id = _host.BarManager.GetNewItemId();
+                _menu = new DevExpress.XtraBars.BarSubItem();
+                _menu.Caption = _name;
+                _menu.Name = "pluginmnu" + _name;
+                _menu.Id = id;
+                _host.BarManager.Items.Add(_menu);
+                if (_host.InsertBeforeLink == null)
+                    _host.BarMainMenu.AddItem(_menu);
+                else
+                    _host.BarMainMenu.InsertItem(_host.InsertBeforeLink, _menu);
+
+                {
+                    DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                    barButtonItem1.Caption = "发布任务";
+                    barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                    barButtonItem1.Name = "pluginmnu" + _name + "发布任务";
+                    _host.BarManager.Items.Add(barButtonItem1);
+                    _menuItems.Add(barButtonItem1);
+                    _menu.ItemLinks.Add(barButtonItem1, true);
+                    barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                }
+                {
+                    DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                    barButtonItem1.Caption = "任务浏览";
+                    barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                    barButtonItem1.Name = "pluginmnu" + _name + "任务浏览";
+                    _host.BarManager.Items.Add(barButtonItem1);
+                    _menuItems.Add(barButtonItem1);
+                    _menu.ItemLinks.Add(barButtonItem1, true);
+                    barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                }
+                {
+                    DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                    barButtonItem1.Caption = "提交任务";
+                    barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                    barButtonItem1.Name = "pluginmnu" + _name + "提交任务";
+                    _host.BarManager.Items.Add(barButtonItem1);
+                    _menuItems.Add(barButtonItem1);
+                    _menu.ItemLinks.Add(barButtonItem1, true);
+                    barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                }
+                {
+                    DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                    barButtonItem1.Caption = "任务条件查询";
+                    barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                    barButtonItem1.Name = "pluginmnu" + _name + "任务条件查询";
+                    _host.BarManager.Items.Add(barButtonItem1);
+                    _menuItems.Add(barButtonItem1);
+                    _menu.ItemLinks.Add(barButtonItem1, true);
+                    barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                }
+                {
+                    DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                    barButtonItem1.Caption = "任务统计";
+                    barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                    barButtonItem1.Name = "pluginmnu" + _name + "任务统计";
+                    _host.BarManager.Items.Add(barButtonItem1);
+                    _menuItems.Add(barButtonItem1);
+                    _menu.ItemLinks.Add(barButtonItem1, true);
+                    barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem_Click);
+                }
+                #endregion
+            }
+            return true;
+        }
+        public bool UnInitialize()
+        {
+            if (_host.UIRibbon)
+            {
+                #region 新方式卸载
+                try
+                {
+                    for (int i = _menuItems.Count - 1; i >= 0; i--)
+                    {
+                        _host.BarMainRibbonControl.Items.Remove(_menuItems[i]);
+
+
+                    }
+                    for (int i = 0; i < ribbonPage.Groups.Count; i++)
+                    {
+                        ribbonPage.Groups[i].ItemLinks.Clear();
+
+                    }
+                    ribbonPage.Groups.Clear();
+                    _host.BarMainRibbonControl.Pages.Remove(ribbonPage);
+
+                    _menuItems.Clear();
+                    _menuItems = null;
+                    _host = null;
+                }
+                catch (System.Exception ex)
+                {
+                    return false;
+                }
+                #endregion
+            }
+            else
+            {
+                #region 旧方式卸载
+                for (int i = 0; i < _menuItems.Count; i++)
+                {
+                    _host.BarManager.Items.Remove(_menuItems[i]);
+                }
+                _menu.ItemLinks.Clear();
+                int iCount = _host.BarMainMenu.ItemLinks.Count;
+                for (int i = 0; i < iCount; i++)
+                {
+                    if (_host.BarMainMenu.ItemLinks[i].Item == _menu)
+                    {
+                        _host.BarMainMenu.ItemLinks.RemoveAt(i);
+                        break;
+                    }
+                }
+
+                _host.BarManager.Items.Remove(_menu);
+                _menuItems.Clear();
+                _menuItems = null;
+
+                #endregion
+            }
+
+
+            //_PatrolsocketServer.DisconnectServer();
+            return true;
+        }
+        public void MapCreat(string strCommand)
+        {
+            string[] strget = strCommand.Split('@');
+            #region 轨迹回放
+            if (strget[0] == "轨迹回放")
+            {
+
+                //if (timer != null)
+                //{
+                //    timer.Stop();
+                //}
+                MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+                ESRI.ArcGIS.Geometry.IPoint pPoint = null;
+                ESRI.ArcGIS.Display.ISymbol symbol = null;
+                ESRI.ArcGIS.Geometry.Polyline pPolyline;
+                MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = new MapDevGisFrame.CommServices.CommQuery.CustromRenderManager();
+                symbolLoad.Host = _host;
+                symbolLoad.Load();
+                symbol = symbolLoad.GetPointSymbole("巡检", 1);
+                //bool bZoom;
+                string strSQL = "select * from " + _host.PrjCod + "专题_巡检_巡检点表 where 任务ID = " + strget[1] + " order by ID";
+                string strCommand2 = _host.DataConnection.StandSql(strSQL);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand2, "专题_巡检_巡检点表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    return;
+                }
+                else
+                {
+                    pPoint = new ESRI.ArcGIS.Geometry.Point();
+                    pPolyline = new ESRI.ArcGIS.Geometry.Polyline();
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        object miss = Type.Missing;
+                        pPolyline.AddPoint(pPoint, ref miss, ref miss);
+                    }
+                    ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+                    pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPolyline;
+
+                    pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 1);
+                    //然后加入
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                        ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                        pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint;
+                        ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+                        //加巡检点描述注记
+                        string strPoint = "";
+                        if (table.Rows[i]["关键点号"].ToString().TrimEnd() != "")
+                        {
+                            string strSql = "select 节点描述 from " + _host.PrjCod + "专题_巡检_线路节点表 where 节点序号 = " + table.Rows[i]["关键点号"].ToString().TrimEnd();
+                            strPoint = _host.DataConnection.GetFldValue(strSql, "节点描述") + "；" + table.Rows[i]["巡检时间"].ToString().TrimEnd();
+                        }
+                        if (i == 0 || i == table.Rows.Count - 1)
+                        {
+                            strPoint = table.Rows[i]["巡检时间"].ToString().TrimEnd();
+                        }
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                        pPoint, strPoint, 10, 50, "宋体", true), null, false);
+                        if (i == table.Rows.Count - 1)
+                        {
+                            //_host.MapControl.Scale(1000);
+                            _host.MapControl.CenterAt(pPoint);
+                        }
+                    }
+                }
+                strCurrentCommand = "";
+
+                //随比例缩放图形
+                MapDevGisFrame.CommServices.GeoQuery.QueryTool tool = new CommServices.GeoQuery.QueryTool();
+                tool.Host = _host;
+                tool.InitPara();
+                tool.LocFeature(_host.MapControl, pPolyline as ESRI.ArcGIS.Geometry.IGeometry);
+
+                //刷新图形
+                //ESRI.ArcGIS.Carto.IActiveView pAV = (ESRI.ArcGIS.Carto.IActiveView)_host.MapControl.Map;
+                //pAV.PartialRefresh(ESRI.ArcGIS.Carto.esriViewDrawPhase.esriViewGraphics, null, pAV.Extent);
+                //_host.EnableClearDrawButton();
+
+
+            }
+            #endregion
+            #region 故障回放
+            else if (strget[0] == "故障回放")
+            {
+                iCurrentID = Convert.ToInt32(strget[1]);
+                string time = strget[2].ToString();
+                string strSQl = "select * from " + _host.PrjCod + "专题_巡检_巡检点表 where 任务ID=" + iCurrentID + " and left(巡检时间,10) = '" + time + "' order by ID";
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strSQl, "专题_巡检_巡检点表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    MessageBox.Show("没有符合条件的轨迹");
+                    return;
+                }
+                else
+                {
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+
+                    ESRI.ArcGIS.Geometry.IPoint pPoint = null;
+                    ESRI.ArcGIS.Display.ISymbol symbol = null;
+                    ESRI.ArcGIS.Geometry.Polyline pPolyline;
+                    MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = new MapDevGisFrame.CommServices.CommQuery.CustromRenderManager();
+                    symbolLoad.Host = _host;
+                    symbolLoad.Load();
+                    symbol = symbolLoad.GetPointSymbole("巡检", 2);
+                    //bool bZoom;
+
+                    pPoint = new ESRI.ArcGIS.Geometry.Point();
+                    pPolyline = new ESRI.ArcGIS.Geometry.Polyline();
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        object miss = Type.Missing;
+                        pPolyline.AddPoint(pPoint, ref miss, ref miss);
+                    }
+                    ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+                    pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPolyline;
+
+                    pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 2);
+                    //然后加入
+
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+
+                    string strCommand2 = "select * from " + _host.PrjCod + "专题_巡检_故障点表 where 任务ID = " + strget[1] + " and left(巡检时间,10)='" + time + "' order by ID";
+                    System.Data.DataTable table1 = _host.DataConnection.CreateCommanDataTable(strCommand2, "专题_巡检_故障点表");
+                    if (table1 == null || table1.Rows.Count < 1)
+                    {
+                        MessageBox.Show("没有故障点");
+                        return;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < table1.Rows.Count; i++)
+                        {
+                            ESRI.ArcGIS.Geometry.IPoint pPoint1 = new Point();
+                            //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                            pPoint1.X = Convert.ToDouble(table1.Rows[i]["坐标X"]);
+                            pPoint1.Y = Convert.ToDouble(table1.Rows[i]["坐标Y"]);
+                            ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                            ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                            pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint1;
+                            ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+                            //加故障点描述注记
+                            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                            pPoint1, "隐患描述:" + table1.Rows[i]["隐患描述"].ToString().TrimEnd() + ";" + table1.Rows[i]["巡检时间"].ToString().TrimEnd(), 10, 50, "宋体", true), null, false);
+                        }
+                    }
+                    strCurrentCommand = "";
+
+                    //随比例缩放图形
+                    MapDevGisFrame.CommServices.GeoQuery.QueryTool tool = new CommServices.GeoQuery.QueryTool();
+                    tool.Host = _host;
+                    tool.InitPara();
+                    tool.LocFeature(_host.MapControl, pPolyline as ESRI.ArcGIS.Geometry.IGeometry);
+
+
+                    //刷新图形
+
+                    //ESRI.ArcGIS.Carto.IActiveView pAV = (ESRI.ArcGIS.Carto.IActiveView)_host.MapControl.Map;
+                    //pAV.PartialRefresh(ESRI.ArcGIS.Carto.esriViewDrawPhase.esriViewGraphics, null, pAV.Extent);
+                    //_host.EnableClearDrawButton();
+                }
+
+
+            }
+            #endregion
+            #region 线路浏览
+            else if (strget[0] == "线路浏览")
+            {
+
+                MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+
+                ESRI.ArcGIS.Geometry.IPoint pPoint = null;
+                ESRI.ArcGIS.Display.ISymbol symbol = null;
+                ESRI.ArcGIS.Geometry.Polyline pPolyline;
+                MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = new MapDevGisFrame.CommServices.CommQuery.CustromRenderManager();
+                symbolLoad.Host = _host;
+                symbolLoad.Load();
+                symbol = symbolLoad.GetPointSymbole("巡检", 3);
+                //bool bZoom;
+                string strSQL = "select 坐标X,坐标Y,节点描述 from " + _host.PrjCod + "专题_巡检_线路节点表 where 线路ID = " + strget[1] + " order by ID";
+                string strCommand2 = _host.DataConnection.StandSql(strSQL);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand2, "专题_巡检_线路节点表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    return;
+                }
+                else
+                {
+                    pPoint = new ESRI.ArcGIS.Geometry.Point();
+                    pPolyline = new ESRI.ArcGIS.Geometry.Polyline();
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        object miss = Type.Missing;
+                        pPolyline.AddPoint(pPoint, ref miss, ref miss);
+                    }
+
+                    ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+                    pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPolyline;
+
+                    pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 3);
+                    //然后加入
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                        ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                        pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint;
+                        ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+                        //加节点描述注记
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                        pPoint, table.Rows[i]["节点描述"].ToString(), 10, 50, "宋体", true), null, false);
+
+                    }
+
+                }
+                strCurrentCommand = "";
+                //随比例缩放图形
+                MapDevGisFrame.CommServices.GeoQuery.QueryTool tool = new CommServices.GeoQuery.QueryTool();
+                tool.Host = _host;
+                tool.InitPara();
+                tool.LocFeature(_host.MapControl, pPolyline as ESRI.ArcGIS.Geometry.IGeometry);
+
+                //刷新图形
+                //ESRI.ArcGIS.Carto.IActiveView pAV = (ESRI.ArcGIS.Carto.IActiveView)_host.MapControl.Map;
+                //pAV.PartialRefresh(ESRI.ArcGIS.Carto.esriViewDrawPhase.esriViewGraphics, null, pAV.Extent);
+                //_host.EnableClearDrawButton();
+
+            }
+            #endregion
+            #region 隐患浏览
+            else if (strget[0] == "隐患浏览")
+            {
+                MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+
+                ESRI.ArcGIS.Geometry.IPoint pPoint = null;
+                ESRI.ArcGIS.Display.IMarkerSymbol symbol = null;
+                ILineSymbol pLineSymbol;
+                ESRI.ArcGIS.Geometry.Polyline pPolyline;
+                //MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = new MapDevGisFrame.CommServices.CommQuery.CustromRenderManager();
+                //symbolLoad.Host = _host;
+                //symbolLoad.Load();
+
+                //string strCount = strget[4];
+                //int iCount = Convert.ToInt32(strCount);
+                //if()
+                //{
+
+                //}
+                symbol = new ESRI.ArcGIS.Display.SimpleMarkerSymbol();
+                symbol.Color = GetRGBColor(120, 110, 200);
+                symbol.Size = 6;
+
+                //bool bZoom;
+                pLineSymbol = new SimpleLineSymbol();
+
+                string strSQL = "select 坐标X,坐标Y,节点描述 from " + _host.PrjCod + "专题_巡检_线路节点表 where 线路ID = " + strget[2] + " order by ID";
+                string strCommand2 = _host.DataConnection.StandSql(strSQL);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand2, "专题_巡检_线路节点表");
+                string strSQL1 = "select * from " + _host.PrjCod + "专题_巡检_故障点表 where 任务ID=" + strget[1] + " order by 巡检时间";
+                string strCommand3 = _host.DataConnection.StandSql(strSQL1);
+                System.Data.DataTable table2 = _host.DataConnection.CreateCommanDataTable(strCommand3, "专题_巡检_任务分配表");
+                #region 定位线路
+                if (table == null || table.Rows.Count < 1)
+                {
+                    return;
+                }
+                else
+                {
+                    pPoint = new ESRI.ArcGIS.Geometry.Point();
+                    pPolyline = new ESRI.ArcGIS.Geometry.Polyline();
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        object miss = Type.Missing;
+                        pPolyline.AddPoint(pPoint, ref miss, ref miss);
+                    }
+
+                    ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+                    pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPolyline;
+
+                    pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 3);
+                    //然后加入
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table.Rows[i]["坐标Y"]);
+                        ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                        ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                        pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint;
+                        ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+                        //加节点描述注记
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                        pPoint, table.Rows[i]["节点描述"].ToString(), 10, 50, "宋体", true), null, false);
+
+                    }
+
+                }
+                #endregion
+                #region 定位隐患
+                if (table2 == null || table2.Rows.Count < 1)
+                {
+                    return;
+                }
+                else
+                {
+                    for (int i = 0; i < table2.Rows.Count; i++)
+                    {
+
+                        //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                        pPoint.X = Convert.ToDouble(table2.Rows[i]["坐标X"]);
+                        pPoint.Y = Convert.ToDouble(table2.Rows[i]["坐标Y"]);
+                        ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                        ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                        pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint;
+                        ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+                        //加节点描述注记
+                        //MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                        //MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                        //pPoint, table2.Rows[i]["节点描述"].ToString(), 10, 50, "宋体", true), null, false);
+
+                    }
+                }
+                #endregion
+                strCurrentCommand = "";
+                //随比例缩放图形
+                MapDevGisFrame.CommServices.GeoQuery.QueryTool tool = new CommServices.GeoQuery.QueryTool();
+                tool.Host = _host;
+                tool.InitPara();
+                tool.LocFeature(_host.MapControl, pPolyline as ESRI.ArcGIS.Geometry.IGeometry);
+            }
+            #endregion
+
+        }
+        public ESRI.ArcGIS.Geometry.Polyline CreateLine(IPoint from, IPoint to)
+        {
+            IPointCollection pPointCollection = new Polyline();
+            pPointCollection.AddPoint(from);
+            pPointCollection.AddPoint(to);
+
+
+
+            ESRI.ArcGIS.Geometry.Polyline pLine = pPointCollection as ESRI.ArcGIS.Geometry.Polyline;
+            //pLine.PutCoords(from, to);
+            //return pLine;
+            return pLine;
+        }
+        public void OnMouseDown(int button, int shift, int x, int y, double max, double mapy)
+        {
+            //MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+            if (button == 1)
+            {
+                #region 左键
+                #region 线路获取
+                if (strCurrentCommand == "线路获取")
+                {
+                    ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+
+                    ISimpleLineSymbol pSimpleLineSymbol = new SimpleLineSymbol();
+                    pSimpleLineSymbol.Width = 2;
+                    pSimpleLineSymbol.Style = esriSimpleLineStyle.esriSLSDashDot;
+                    pSimpleLineSymbol.Color = GetRGBColor(255, 215, 0);
+                    ESRI.ArcGIS.Display.ISymbol symbol = pSimpleLineSymbol as ESRI.ArcGIS.Display.ISymbol;
+                    ESRI.ArcGIS.Display.ILineSymbol symbol1 = pSimpleLineSymbol as ESRI.ArcGIS.Display.ILineSymbol;
+
+                    ESRI.ArcGIS.Carto.IActiveView activeView = _host.MapControl.ActiveView;
+                    ESRI.ArcGIS.Geometry.IPoint pPoint1 = new ESRI.ArcGIS.Geometry.Point();
+                    pPoint1.X = max;
+                    pPoint1.Y = mapy;
+                    if (_pNewLinFB == null)
+                    {
+                        try
+                        {
+                            h++;
+                            string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_线路表", "最大值");
+                            if (strVal == "")
+                                strVal = "0";
+                            iWayID = Convert.ToInt32(strVal) + 1;
+                            string strSql = "insert into " + _host.PrjCod + "专题_巡检_线路表(ID) values(" + iWayID + ")";
+                            _host.DataConnection.ExcuteCommand(strSql);
+
+
+                            frm = new frmNodeInfo();
+                            _pNewLinFB = new ESRI.ArcGIS.Display.NewLineFeedback();
+
+                            //_pNewLinFB.Symbol = symbol;
+                            _pNewLinFB.Display = activeView.ScreenDisplay;
+
+                            _pNewLinFB.Start(pPoint1);
+                            frm.strPointDescribe = "节点1";
+                            frm.strPointType = "普通节点";
+                            lstPoint.Add(pPoint1);
+
+                            pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint1;
+                            //ISimpleLineSymbol pSimpleLineSymbol = new SimpleLineSymbol();
+                            //pSimpleLineSymbol.Width = 2;
+                            //pSimpleLineSymbol.Style = esriSimpleLineStyle.esriSLSDashDot;
+                            //pSimpleLineSymbol.Color = GetRGBColor(255, 215, 0);
+                            //ESRI.ArcGIS.Display.ILineSymbol symbol = pSimpleLineSymbol as ESRI.ArcGIS.Display.ILineSymbol;
+                            pLineEle.Symbol = symbol1;
+                            //然后加入
+                            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+                            //pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)_pNewLinFB.Stop();
+                            //pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 3);
+                            ////然后加入
+                            //MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+
+                        }
+                        catch (System.Exception ex)
+                        {
+
+                        }
+                    }
+                    else
+                    {
+                        if (frm == null || frm.IsDisposed)
+                        {
+                            h++;
+                            frm = new frmNodeInfo();
+                            frm.strPointDescribe = "节点" + h + "";
+                            frm.strPointType = "普通节点";
+                            //_pNewLinFB.Symbol = symbol;
+                            _pNewLinFB.AddPoint(pPoint1);
+                            lstPoint.Add(pPoint1);
+                            ESRI.ArcGIS.Geometry.Polyline line = CreateLine(lstPoint[lstPoint.Count - 2], lstPoint[lstPoint.Count - 1]);
+                            pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)line;
+                            pLineEle.Symbol = symbol1;
+                            //然后加入
+                            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+                        }
+                        else
+                        {
+                            MessageBox.Show("请先保存节点信息");
+                            return;
+                        }
+
+                    }
+                    #region 捕捉4图层关键点
+                    bool a = true;
+                    for (int i = 0; i < _host.MapControl.LayerCount; i++)
+                    {
+                        ILayer pLayer = _host.MapControl.get_Layer(i);
+                        IFeatureLayer pFeatureLayer = pLayer as IFeatureLayer;
+                        if (pFeatureLayer != null)
+                        {
+                            if (pFeatureLayer.Name == "阀门" || pFeatureLayer.Name == "调压站" || pFeatureLayer.Name == "调压箱" || pFeatureLayer.Name == "调压柜")
+                            {
+                                IFeatureClass pFeatureClass = pFeatureLayer.FeatureClass;
+                                IFeature pFeature = null;
+                                IQueryFilter pQFilter = new QueryFilter();
+                                IFeatureCursor pFeatureCursor;
+                                pQFilter.WhereClause = "";
+                                pFeatureCursor = pFeatureClass.Search(pQFilter, false);
+                                pFeature = pFeatureCursor.NextFeature();
+                                while (pFeature != null)
+                                {
+                                    IGeometry igeometry = pFeature.Shape as IGeometry;
+                                    ESRI.ArcGIS.Geometry.IPoint pPoint = pFeature.Shape as ESRI.ArcGIS.Geometry.Point;
+                                    if (!lstSnapPoint.Contains(pPoint))
+                                    {
+                                        if (distance(pPoint1, pPoint) < 50)
+                                        {
+                                            //_pNewLinFB.Symbol = symbol2;
+                                            //_pNewLinFB.MoveTo(pPoint);
+                                            lstSnapPoint.Add(pPoint);
+                                            frm.strPointType = "关键节点";
+                                            a = false;
+                                            break;
+                                        }
+
+                                    }
+                                    pFeature = pFeatureCursor.NextFeature();
+                                }
+                            }
+                        }
+                        if (a == false)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            frm.strPointType = "普通节点";
+                        }
+                    }
+                    #endregion
+                    int iMapWidth = _host.MapControl.Width;
+                    int iMapHeight = _host.MapControl.Height;
+                    int iWindowX = 0;
+                    int iWindowY = 0;
+                    _host.MapControl.FromMapPoint(pPoint1, ref iWindowX, ref iWindowY);
+                    if (iMapHeight < 1 || iMapWidth < 1)
+                        return;
+                    System.Drawing.Point pt = new System.Drawing.Point();
+                    pt.X = iWindowX + 3;
+                    pt.Y = iWindowY + 3;
+                    System.Drawing.Point ptScreen = _host.MapControl.PointToScreen(pt);
+                    frm._host = _host;
+                    frm.NodeNumber = h;
+                    frm.LineID = iWayID;
+                    frm.x = pPoint1.X;
+                    frm.y = pPoint1.Y;
+                    frm.StartPosition = FormStartPosition.Manual;
+                    //更改位置
+                    frm.Location = ptScreen;
+                    frm.ShowInTaskbar = false;
+                    frm.TopMost = true;
+                    frm.Show();
+
+                    //MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+                    //ESRI.ArcGIS.Geometry.IPolyline pLine = (ESRI.ArcGIS.Geometry.IPolyline)_host.MapControl.TrackLine();
+                    //ESRI.ArcGIS.Geometry.IPointCollection pts = pLine as ESRI.ArcGIS.Geometry.IPointCollection;
+                    //if (pLine == null)
+                    //    return;
+
+                    ////if (_frmPatrolWayApply != null && !_frmPatrolWayApply.IsDisposed)
+                    //{
+                    //    //传值给线路定制界面
+                    //    _frmPatrolWayApply.GeoFilter = pLine;
+                    //    //_frmPatrolWayApply.LayerName = "地形";
+                    //    strCurrentCommand = "";
+
+                    //    //绘制线路
+                    //    ESRI.ArcGIS.Geometry.IPoint pPoint = null;
+                    //    ESRI.ArcGIS.Display.ISymbol symbol = null;
+                    //    ESRI.ArcGIS.Geometry.Polyline pPolyline;
+                    //    MapDevGisFrame.CommServices.CommQuery.CustromRenderManager symbolLoad = new MapDevGisFrame.CommServices.CommQuery.CustromRenderManager();
+                    //    symbolLoad.Host = _host;
+                    //    symbolLoad.Load();
+                    //    symbol = symbolLoad.GetPointSymbole("巡检", 3);
+                    //    //bool bZoom;
+                    //    if (pts == null || pts.PointCount < 1)
+                    //    {
+                    //        return;
+                    //    }
+                    //    else
+                    //    {
+                    //        pPoint = new ESRI.ArcGIS.Geometry.Point();
+                    //        pPolyline = new ESRI.ArcGIS.Geometry.Polyline();
+                    //        for (int i = 0; i < pts.PointCount; i++)
+                    //        {
+                    //            pPoint.X = Convert.ToDouble(pts.get_Point(i).X);
+                    //            pPoint.Y = Convert.ToDouble(pts.get_Point(i).Y);
+                    //            object miss = Type.Missing;
+                    //            pPolyline.AddPoint(pPoint, ref miss, ref miss);
+                    //        }
+                    //        ESRI.ArcGIS.Carto.IElement pElement = new ESRI.ArcGIS.Carto.LineElement();
+                    //        ESRI.ArcGIS.Carto.ILineElement pLineEle = (ESRI.ArcGIS.Carto.ILineElement)pElement;
+                    //        pElement.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPolyline;
+                    //        pLineEle.Symbol = (ESRI.ArcGIS.Display.ILineSymbol)symbolLoad.GetLineSymbole("巡检", 3);
+                    //        //然后加入
+                    //        MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false);
+
+                    //        //绘制线路节点
+                    //        for (int i = 0; i < pts.PointCount; i++)
+                    //        {
+
+                    //            //symbol = new ESRI.ArcGIS.Display.IMarkerSymbol();
+                    //            pPoint.X = Convert.ToDouble(pts.get_Point(i).X);
+                    //            pPoint.Y = Convert.ToDouble(pts.get_Point(i).Y);
+                    //            ESRI.ArcGIS.Carto.IElement pElem = new ESRI.ArcGIS.Carto.MarkerElement();
+                    //            ESRI.ArcGIS.Carto.IElement pEle = pElem;
+                    //            pEle.Geometry = (ESRI.ArcGIS.Geometry.IGeometry)pPoint;
+                    //            ((ESRI.ArcGIS.Carto.IMarkerElement)pElem).Symbol = symbol as ESRI.ArcGIS.Display.IMarkerSymbol;
+                    //            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pEle, null, false);
+
+                    //            //加节点描述注记
+                    //            int j = i + 1;
+                    //            string strPoint = "节点("+j+")";
+                    //            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map,
+                    //            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.MakeATextElement(_host.MapControl.Map,
+                    //            pPoint, strPoint, 10, 50, "宋体", true), null, false);
+                    //        }
+                    //    }
+                    //    //随比例缩放图形
+                    //    MapDevGisFrame.CommServices.GeoQuery.QueryTool tool = new CommServices.GeoQuery.QueryTool();
+                    //    tool.Host = _host;
+                    //    tool.InitPara();
+                    //    tool.LocFeature(_host.MapControl, pPolyline as ESRI.ArcGIS.Geometry.IGeometry);
+
+                    //    //刷新图形
+                    //    ESRI.ArcGIS.Carto.IActiveView pAV = (ESRI.ArcGIS.Carto.IActiveView)_host.MapControl.Map;
+                    //    pAV.PartialRefresh(ESRI.ArcGIS.Carto.esriViewDrawPhase.esriViewGraphics, null, pAV.Extent);
+                    //    _host.EnableClearDrawButton();
+                    //}
+
+                }
+                #endregion
+                #region 编辑线路节点坐标
+
+                if (strCurrentCommand.Contains("选择节点"))
+                {
+                    string[] strget = strCurrentCommand.Split('@');
+                    IPoint pt = new Point();
+                    pt.X = max;
+                    pt.Y = mapy;
+                    ISimpleMarkerSymbol pSimpleLineSymbol = new SimpleMarkerSymbol();
+                    IMarkerElement pMarkerElement = null;
+                    IElement pElement = new MarkerElement();
+                    ESRI.ArcGIS.Geometry.IGeometry pGeometry = pt as ESRI.ArcGIS.Geometry.IGeometry;
+                    pElement.Geometry = pGeometry;
+                    pMarkerElement = pElement as IMarkerElement;
+
+                    pSimpleLineSymbol.Size = 10;
+                    pSimpleLineSymbol.Style = esriSimpleMarkerStyle.esriSMSCircle;
+                    pSimpleLineSymbol.Color = GetRGBColor(255, 215, 0);
+                    pMarkerElement.Symbol = pSimpleLineSymbol;
+                    MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.AddTempElement(_host.MapControl.Map, pElement, null, false); ;
+                    string strSql = "update " + _host.PrjCod + "专题_巡检_线路节点表 set 坐标X=" + max + ",坐标Y=" + mapy + " where ID =" + strget[2] + "";
+                    _host.DataConnection.ExcuteCommand(strSql);
+
+                    string strSQL = "select c.ID as ID,版本 from (((select * FROM " + _host.PrjCod + "专题_巡检_线路节点表 where ID=" + strget[2] + ") as a inner join ( SELECT * FROM " + _host.PrjCod + "专题_巡检_线路表) as b on a.线路ID = b.ID ) inner join (SELECT * FROM " + _host.PrjCod + "专题_巡检_任务分配表) as c on b.线路名称 = c.线路名称)";
+                    string vesion = _host.DataConnection.GetFldValue(strSQL, "版本");
+                    if (vesion != "")
+                    {
+                        string strTaskID = _host.DataConnection.GetFldValue(strSQL, "ID");
+                        string newversion = (Convert.ToInt32(vesion) + 1).ToString();
+                        string update = "update " + _host.PrjCod + "专题_巡检_任务分配表 set 版本='" + newversion + "' where ID=" + strTaskID + "";
+                        _host.DataConnection.ExcuteCommand(update);
+                    }
+
+                    string strCommand = "线路浏览@" + strget[1] + "";
+                    MapCreat(strCommand);
+                }
+                #endregion
+                #endregion
+            }
+        }
+        public void OnMouseUp(int button, int shift, int x, int y, double max, double mapy)
+        {
+            if (button == 2)
+            {
+                if (strCurrentCommand == "线路获取")
+                {
+                    //if (frm == null || frm.IsDisposed)
+                    //{
+                    //先清空右键菜单
+                    if (_pNewLinFB != null)
+                    {
+                        int nCount = popupMenuSubLayers.ItemLinks.Count;
+                        for (int j = nCount - 1; j >= 0; j--)
+                        {
+                            _host.BarManager.Items.Remove(popupMenuSubLayers.ItemLinks[j].Item);
+                        }
+                        popupMenuSubLayers.ClearLinks();
+
+                        DevExpress.XtraBars.BarButtonItem barButtonItem = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem.Caption = "保存";
+                        barButtonItem.Id = _host.BarManager.GetNewItemId();
+                        barButtonItem.Name = "popMenuEditSave";
+                        _host.BarManager.Items.Add(barButtonItem);
+                        popupMenuSubLayers.ItemLinks.Add(barButtonItem, false);
+                        barButtonItem.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItemPopmenu_Click);
+                        popupMenuSubLayers.ShowPopup(_host.BarManager, Control.MousePosition);
+
+                        DevExpress.XtraBars.BarButtonItem barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
+                        barButtonItem1.Caption = "不保存";
+                        barButtonItem1.Id = _host.BarManager.GetNewItemId();
+                        barButtonItem1.Name = "popMenuEditNoSave";
+                        _host.BarManager.Items.Add(barButtonItem1);
+                        popupMenuSubLayers.ItemLinks.Add(barButtonItem1, false);
+                        barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItemPopmenu1_Click);
+                        popupMenuSubLayers.ShowPopup(_host.BarManager, Control.MousePosition);
+
+                        //DevExpress.XtraBars.BarButtonItem barButtonItem2 = new DevExpress.XtraBars.BarButtonItem();
+                        //barButtonItem2.Caption = "回退";
+                        //barButtonItem2.Id = _host.BarManager.GetNewItemId();
+                        //barButtonItem2.Name = "popMenuEditCancle";
+                        //_host.BarManager.Items.Add(barButtonItem2);
+                        //popupMenuSubLayers.ItemLinks.Add(barButtonItem2, false);
+                        //barButtonItem2.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItemPopmenu2_Click);
+                        //popupMenuSubLayers.ShowPopup(_host.BarManager, Control.MousePosition);
+                    }
+                    //}
+                    //else
+                    //{
+                    //    MessageBox.Show("请先保存上一节点信息");
+                    //}
+
+                    //strCurrentCommand = "";
+                }
+            }
+            //if (_ucAdminAccident != null && !_ucAdminAccident.IsDisposed)
+            //{
+            //    _ucAdminAccident.OnMouseUp(button, shift, x, y, max, mapy);
+            //}
+            //if (_ucReciveTQSQ != null && !_ucReciveTQSQ.IsDisposed)
+            //{
+            //    _ucReciveTQSQ.OnMouseUp(button, shift, x, y, max, mapy);
+            //}
+        }
+        //保存
+        private void barButtonItemPopmenu_Click(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+        {
+            if (frm == null || frm.IsDisposed)
+            {
+                _pNewLinFB.Stop();
+                _pNewLinFB = null;
+                if (lineinfo == null || lineinfo.IsDisposed)
+                {
+                    lineinfo = new frmLineInfo();
+                    lineinfo._host = _host;
+                    lineinfo.LineID = iWayID;
+                    lineinfo.Show();
+                }
+                else
+                {
+                    MessageBox.Show("已经打开保存线路窗口");
+                }
+
+            }
+            else
+            {
+                MessageBox.Show("请先保存节点信息");
+                return;
+            }
+        }
+        //不保存
+        private void barButtonItemPopmenu1_Click(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+        {
+            _pNewLinFB.Stop();
+            _pNewLinFB = null;
+            if (frm != null)
+            {
+                frm.Close();
+            }
+            _host.CurrentCommand = "";
+            strCurrentCommand = "";
+            _host.MapControl.MousePointer = ESRI.ArcGIS.Controls.esriControlsMousePointer.esriPointerDefault;
+            MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+            string strSql = "delete from " + _host.PrjCod + "专题_巡检_线路表 where ID=" + iWayID + "";
+            _host.DataConnection.ExcuteCommand(strSql);
+        }
+        //回退
+        //private void barButtonItemPopmenu2_Click(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+        //{
+        //    if (frm != null)
+        //    {
+        //        frm.Close();
+        //        _pNewLinFB.Stop();
+        //        if (lstPoint.Count > 0)
+        //        {
+        //            _pNewLinFB.Start(lstPoint[0]);
+        //            for (int i = 1; i < lstPoint.Count-1; i++)
+        //            {
+        //                _pNewLinFB.AddPoint(lstPoint[i]);
+        //            }
+        //        }
+        //        //_pNewLinFB.Start
+        //        //_pNewLinFB.Start(pPoint1);
+        //        //_pNewLinFB.
+        //    }
+        //    else
+        //    {
+        //        _pNewLinFB.Stop();
+        //        if (lstPoint.Count > 0)
+        //        {
+        //            _pNewLinFB.Start(lstPoint[0]);
+        //            for (int i = 1; i < lstPoint.Count - 1; i++)
+        //            {
+        //                _pNewLinFB.AddPoint(lstPoint[i]);
+        //            }
+        //        }
+        //    }
+
+        //}
+        public void OnMouseMove(int button, int shift, int x, int y, double max, double mapy)
+        {
+            if (strCurrentCommand == "线路获取")
+            {
+                try
+                {
+                    ESRI.ArcGIS.Carto.IActiveView activeView = _host.MapControl.ActiveView;
+                    ESRI.ArcGIS.Geometry.IPoint pPoint1 = new ESRI.ArcGIS.Geometry.Point();
+                    pPoint1.X = max;
+                    pPoint1.Y = mapy;
+                    if (_pNewLinFB != null)
+                    {
+                        //_pNewLinFB.Symbol = null;
+                        _pNewLinFB.MoveTo(pPoint1);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+
+                }
+            }
+            //if (_ucAdminAccident != null && !_ucAdminAccident.IsDisposed)
+            //{
+            //    _ucAdminAccident.OnMouseMove(button, shift, x, y, max, mapy);
+            //}
+            //if (_ucReciveTQSQ != null && !_ucReciveTQSQ.IsDisposed)
+            //{
+            //    _ucReciveTQSQ.OnMouseMove(button, shift, x, y, max, mapy);
+            //}
+
+            //strCurrentCommand = "";
+        }
+        private double distance(ESRI.ArcGIS.Geometry.IPoint pPoint1, ESRI.ArcGIS.Geometry.IPoint pPoint2)
+        {
+            if (pPoint1.X == pPoint2.X && pPoint1.Y == pPoint2.Y)
+            {
+                return 0;
+            }
+            else
+            {
+                return Math.Sqrt((pPoint1.X - pPoint2.X) * (pPoint1.X - pPoint2.X) + (pPoint1.Y - pPoint2.Y) * (pPoint1.Y - pPoint2.Y));
+            }
+        }
+        public void OnAfterScreenDraw(int hDC)
+        {
+
+        }
+        public void OnBeforeScreenDraw(int hDC)
+        {
+
+        }
+        public void OnDoubleClick(int button, int shift, int x, int y, double max, double mapy)
+        {
+            //if (strCurrentCommand == "线路获取")
+            //{
+
+            //    ESRI.ArcGIS.Geometry.IGeometry pGeometry;
+
+            //    pGeometry = _pNewLinFB.Stop() as ESRI.ArcGIS.Geometry.IGeometry;
+
+            //    _frmPatrolWayApply.GeoFilter = pGeometry; //传值
+
+            //    if (pGeometry != null)
+            //    {
+            //        AddRectangle(pGeometry, _host.MapControl.ActiveView);
+            //    }
+            //    _pNewLinFB = null;
+            //}
+            //MessageBox.Show(max.ToString());
+            //MessageBox.Show(mapy.ToString());
+        }
+        private void AddRectangle(ESRI.ArcGIS.Geometry.IGeometry pGeometry, IActiveView pActiveView)
+        {
+            ISimpleLineSymbol pSimpleLineSymbol = new SimpleLineSymbol();
+            ILineElement pLineElement = null;
+            IGraphicsContainer pGraphicsContainer;
+            pSimpleLineSymbol.Width = 2;
+            pSimpleLineSymbol.Style = esriSimpleLineStyle.esriSLSDashDot;
+            pSimpleLineSymbol.Color = GetRGBColor(255, 215, 0);
+            IElement pElement = new LineElement();
+            pElement.Geometry = pGeometry;
+            pLineElement = pElement as ILineElement;
+            pLineElement.Symbol = pSimpleLineSymbol;
+            pActiveView = _host.MapControl.ActiveView;
+            pGraphicsContainer = pActiveView as IGraphicsContainer;
+            pGraphicsContainer.AddElement((IElement)pLineElement, 0);
+            pActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+
+        }
+        private void AddPoint(ESRI.ArcGIS.Geometry.IGeometry pGeometry, IActiveView pActiveView)
+        {
+            ISimpleMarkerSymbol pSimpleLineSymbol = new SimpleMarkerSymbol();
+            IMarkerElement pLineElement = null;
+            IGraphicsContainer pGraphicsContainer;
+            pSimpleLineSymbol.Size = 10;
+            pSimpleLineSymbol.Style = esriSimpleMarkerStyle.esriSMSCircle;
+            pSimpleLineSymbol.Color = GetRGBColor(255, 215, 0);
+            IElement pElement = new MarkerElement();
+            pElement.Geometry = pGeometry;
+            pLineElement = pElement as IMarkerElement;
+            pLineElement.Symbol = pSimpleLineSymbol;
+            pActiveView = _host.MapControl.ActiveView;
+            pGraphicsContainer = pActiveView as IGraphicsContainer;
+            pGraphicsContainer.AddElement((IElement)pLineElement, 0);
+            pActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+
+        }
+        private IRgbColor GetRGBColor(int red, int green, int blue)
+        {
+            IRgbColor rGBColor = new RgbColor();
+            rGBColor.Red = red;
+            rGBColor.Green = green;
+            rGBColor.Blue = blue;
+            return rGBColor;
+        }
+        public MapDevGisFrame.PlugInterface.IHost Host
+        {
+            get { return _host; }
+            set { _host = value; }
+        }
+        public void ExcuteCommand(String strCommandName)
+        {
+
+        }
+        private void barButtonItem_Click(object sender, DevExpress.XtraBars.ItemClickEventArgs e)
+        {
+
+            if (e.Item.Caption == "线路定制")
+            {
+                MapDevGisFrame.CommServices.commGraphicsEdit.commGraphicsEdit.CleareTempElementInMap(_host.MapControl.Map);
+                h = 0;
+                _pNewLinFB = null;
+                lstPoint.Clear();
+                lstSnapPoint.Clear();
+                MessageBox.Show("在地图上绘制巡检线路");
+                _host.MapControl.CurrentTool = null;
+                _host.MapControl.MousePointer = ESRI.ArcGIS.Controls.esriControlsMousePointer.esriPointerCrosshair;
+                _host.CurrentPluin = this;
+                _host.CurrentCommand = "线路获取";
+                strCurrentCommand = "线路获取";
+            }
+            else if (e.Item.Caption == "线路浏览")
+            {
+                if (_frmPatrolWayBrows == null || _frmPatrolWayBrows.IsDisposed)
+                {
+                    _frmPatrolWayBrows = new frmPatrolWayBrows();
+                    _frmPatrolWayBrows.Host = _host;
+                    _frmPatrolWayBrows.TopMost = true;
+                    _frmPatrolWayBrows._pParent = this;
+                    _frmPatrolWayBrows.Show();
+                }
+                else
+                {
+                    _frmPatrolWayBrows.TopMost = true;
+
+                }
+            }
+            else if (e.Item.Caption == "下达任务")
+            {
+                if (_frmPatrolTaskBrows == null || _frmPatrolTaskBrows.IsDisposed)
+                {
+                    _frmPatrolTaskBrows = new frmPatrolTaskBrows();
+                    _frmPatrolTaskBrows.Host = _host;
+                    _frmPatrolTaskBrows.TopMost = true;
+                    _frmPatrolTaskBrows._pParent = this;
+                    _frmPatrolTaskBrows.Show();
+                }
+                else
+                {
+                    _frmPatrolTaskBrows.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "隐患管理")
+            {
+                if (_ManageTrouble == null || _ManageTrouble.IsDisposed)
+                {
+                    _ManageTrouble = new ManageTrouble();
+                    _ManageTrouble.Host = _host;
+                    _ManageTrouble.TopMost = true;
+                    _ManageTrouble._pParent = this;
+                    _ManageTrouble.Show();
+                }
+                else
+                {
+                    _ManageTrouble.TopMost = true;
+                }
+                //Daypressure frm = new Daypressure();
+                //frm.Host = _host;
+                //frm.Owner = _host.MainFrm;
+                //frm.Show();
+            }
+            else if (e.Item.Caption == "隐患分析")
+            {
+                if (_TroubleAnalysic == null || _TroubleAnalysic.IsDisposed)
+                {
+                    _TroubleAnalysic = new TroubleAnalysic();
+                    _TroubleAnalysic.Host = _host;
+                    _TroubleAnalysic.TopMost = true;
+                    _TroubleAnalysic._pParent = this;
+                    _TroubleAnalysic.Show();
+                }
+                else
+                {
+                    _TroubleAnalysic.TopMost = true;
+                }
+                //Daypressure frm = new Daypressure();
+                //frm.Host = _host;
+                //frm.Owner = _host.MainFrm;
+                //frm.Show();
+            }
+            else if (e.Item.Caption == "压力信息管理")
+            {
+                if (_ManageNewPressure == null || _ManageNewPressure.IsDisposed)
+                {
+                    _ManageNewPressure = new ManageNewPressure();
+                    _ManageNewPressure.Host = _host;
+                    _ManageNewPressure.TopMost = true;
+                    _ManageNewPressure._pParent = this;
+                    _ManageNewPressure.Show();
+                }
+                else
+                {
+                    _ManageNewPressure.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "实时监控")
+            {
+                if (_frmPatrolTaskBrows == null || _frmPatrolTaskBrows.IsDisposed)
+                {
+                    _frmRealtimeMonitoring = new frmRealtimeMonitoring();
+                    _frmRealtimeMonitoring.Host = _host;
+                    _frmRealtimeMonitoring.TopMost = true;
+                    _frmRealtimeMonitoring._pParent = this;
+                    _frmRealtimeMonitoring.Show();
+                }
+                else
+                {
+                    _frmRealtimeMonitoring.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "轨迹回放")
+            {
+                if (_frmHistoryPlayback == null || _frmHistoryPlayback.IsDisposed)
+                {
+                    _frmHistoryPlayback = new frmHistoryPlayback();
+                    _frmHistoryPlayback.Host = _host;
+                    _frmHistoryPlayback.TopMost = true;
+                    _frmHistoryPlayback._pParent = this;
+                    _frmHistoryPlayback.Show();
+                }
+                else
+                {
+                    _frmHistoryPlayback.TopMost = true;
+                }
+            }
+
+            else if (e.Item.Caption == "故障回放")
+            {
+
+                if (_frmFaultPlayback == null || _frmFaultPlayback.IsDisposed)
+                {
+                    _frmFaultPlayback = new frmFaultPlayback();
+                    _frmFaultPlayback.Host = _host;
+                    _frmFaultPlayback.TopMost = true;
+                    _frmFaultPlayback._pParent = this;
+                    _frmFaultPlayback.Show();
+                }
+                else
+                {
+                    _frmFaultPlayback.TopMost = true;
+                }
+                //_frmPatrolTaskBrows = new frmPatrolTaskBrows();
+                //_frmPatrolTaskBrows.Host = _host;
+                //_frmPatrolTaskBrows._pParent = this;
+                //_frmPatrolTaskBrows.strButton = "故障回放";
+                //_frmPatrolTaskBrows.Show();
+            }
+            else if (e.Item.Caption == "巡检报表")
+            {
+                if (_Daypatrol == null || _Daypatrol.IsDisposed)
+                {
+                    _Daypatrol = new Daypatrol();
+                    _Daypatrol.Host = _host;
+                    _Daypatrol.Owner = _host.MainFrm;
+                    //_Daypatrol.TopMost = true;
+                    _Daypatrol.Show();
+                }
+                else
+                {
+                    _Daypatrol.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "隐患报表")
+            {
+                if (_DayHazards == null || _DayHazards.IsDisposed)
+                {
+                    _DayHazards = new DayHazards();
+                    _DayHazards.Host = _host;
+                    _DayHazards.Owner = _host.MainFrm;
+                    //_DayHazards.TopMost = true;
+                    _DayHazards.Show();
+                }
+                else
+                {
+                    _DayHazards.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "压力报表")
+            {
+                if (_Daypressure == null || _Daypressure.IsDisposed)
+                {
+                    _Daypressure = new Daypressure();
+                    _Daypressure.Host = _host;
+                    _Daypressure.Owner = _host.MainFrm;
+                    //_Daypressure.TopMost = true;
+                    _Daypressure.Show();
+                }
+                else
+                {
+                    _Daypressure.TopMost = true;
+                }
+                //Daypressure frm = new Daypressure();
+                //frm.Host = _host;
+                //frm.Owner = _host.MainFrm;
+                //frm.Show();
+            }
+            else if (e.Item.Caption == "人员考勤")
+            {
+                if (_UserReport == null || _UserReport.IsDisposed)
+                {
+                    _UserReport = new UserReport();
+                    _UserReport.Host = _host;
+                    _UserReport.Owner = _host.MainFrm;
+                    //_UserReport.TopMost = true;
+                    _UserReport.Show();
+                }
+                else
+                {
+                    _UserReport.TopMost = true;
+                }
+                //UserReport frm = new UserReport();
+                //frm.Host = _host;
+                //frm.Owner = _host.MainFrm;
+                //frm.Show();
+            }
+            else if (e.Item.Caption == "开启")
+            {
+                if (_panelJingBao == null || _panelJingBao.IsDisposed)
+                {
+                    _panelJingBao = _host.BockManager.AddPanel(DevExpress.XtraBars.Docking.DockingStyle.Float);
+                    _panelJingBao.ClosedPanel += new DevExpress.XtraBars.Docking.DockPanelEventHandler(_panelJingBao_ClosedPanel);
+                    _panelJingBao.Name = "plugpanel-users";
+                    _panelJingBao.Text = "隐患提醒";
+                    _panelJingBao.ID = new System.Guid("5e91cc69-9e69-4a12-86d9-893b7e28d919");
+                    _panelJingBao.Dock = DevExpress.XtraBars.Docking.DockingStyle.Top;
+                    _panelJingBao.Height = 50;
+                    _panelJingBao.Visibility = DevExpress.XtraBars.Docking.DockVisibility.Visible;
+
+                    _Alarmlabel = new Alarmlabel();
+                    _Alarmlabel.Dock = System.Windows.Forms.DockStyle.Fill;
+                    _Alarmlabel.Location = new System.Drawing.Point(0, 0);
+                    _Alarmlabel.Name = "mapDevControlUsers";
+                    _Alarmlabel.TabIndex = 0;
+                    _Alarmlabel.Host = _host;
+                    _Alarmlabel._pParent = this;
+                    _panelJingBao.ControlContainer.Controls.Add(_Alarmlabel);
+                }
+                else
+                {
+                    MessageBox.Show("已经打开!");
+                }
+                //_ucControlUsers.Start();
+            }
+            else if (e.Item.Caption == "关闭")
+            {
+                if (_panelJingBao != null)
+                {
+                    if (_Alarmlabel.HelpTime != null)
+                    {
+                        _Alarmlabel.HelpTime.Dispose();
+                    }
+                    _host.BockManager.RemovePanel(_panelJingBao);
+                }
+            }
+            else if (e.Item.Caption == "常量设置")
+            {
+                if (_Constantset == null || _Constantset.IsDisposed)
+                {
+                    _Constantset = new Constantset();
+                    _Constantset.Host = _host;
+                    _Constantset.TopMost = true;
+                    _Constantset.Owner = _host.MainFrm;
+                    _Constantset.Show();
+                }
+                else
+                {
+                    _Constantset.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "隐患配置")
+            {
+                if (_YinHuanset == null || _YinHuanset.IsDisposed)
+                {
+                    _YinHuanset = new YinHuanset();
+                    _YinHuanset.Host = _host;
+                    _YinHuanset.TopMost = true;
+                    _YinHuanset.Owner = _host.MainFrm;
+                    _YinHuanset.Show();
+                }
+                else
+                {
+                    _YinHuanset.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "巡检人员管理")
+            {
+                if (_PersonManager == null || _PersonManager.IsDisposed)
+                {
+                    _PersonManager = new PersonManager();
+                    _PersonManager.Host = _host;
+                    _PersonManager.TopMost = true;
+                    _PersonManager.Owner = _host.MainFrm;
+                    _PersonManager.Show();
+                }
+                else
+                {
+                    _PersonManager.TopMost = true;
+                }
+            }
+            else if (e.Item.Caption == "终端日志")
+            {
+                if (_TerminalNote == null || _TerminalNote.IsDisposed)
+                {
+                    _TerminalNote = new TerminalNote();
+                    _TerminalNote.Host = _host;
+                    _TerminalNote.TopMost = true;
+                    _TerminalNote.Owner = _host.MainFrm;
+                    _TerminalNote.Show();
+                }
+                else
+                {
+                    _TerminalNote.TopMost = true;
+                }
+            }
+
+        }
+        private void _panelJingBao_ClosedPanel(object sender, DevExpress.XtraBars.Docking.DockPanelEventArgs e)
+        {
+            _panelJingBao = null;
+        }
+        public void SetSelectCommand(String strCommand, List<String> lstSelLayers)
+        {
+            _lstCustomSelLines.Clear();
+            for (int i = 0; i < lstSelLayers.Count; i++)
+            {
+                _lstCustomSelLines.Add(lstSelLayers[i]);
+            }
+            _host.MapControl.CurrentTool = null;
+            _host.MapControl.MousePointer = ESRI.ArcGIS.Controls.esriControlsMousePointer.esriPointerCrosshair;
+            _host.CurrentPluin = this;
+            _host.CurrentCommand = strCommand;
+            strCurrentCommand = strCommand;
+        }
+        //接收实时监控、停止监控、线路浏览、轨迹回放、故障回放传值
+        public void SetCurrentCommand(String strCommand)
+        {
+            strCurrentCommand = "";
+            _host.MapControl.CurrentTool = null;
+            _host.MapControl.MousePointer = ESRI.ArcGIS.Controls.esriControlsMousePointer.esriPointerCrosshair;
+            _host.CurrentPluin = this;
+            _host.CurrentCommand = strCommand;
+            strCurrentCommand = strCommand;
+            MapCreat(strCurrentCommand);
+        }
+        public void Start()
+        {
+            try
+            {
+                //string hostname = Dns.GetHostName();
+                //IPHostEntry localhost = Dns.GetHostByName(hostname);
+                //IPAddress  iServerIP = localhost.AddressList[0];
+                //strServerIP = iServerIP.ToString();cmd
+
+
+                ThreadStart myThreadDelegate = new ThreadStart(Listen);
+                myThread = new Thread(myThreadDelegate);
+                myThread.Start();
+                myThread.IsBackground = true;
+            }
+            catch (Exception ex)
+            {
+                //this.Invoke(new mydelegate(this.AddMessageToList), new Object[] { ex.ToString() });
+            }
+
+        }
+        public void Stop()
+        {
+            try
+            {
+                myThread.Abort();
+                foreach (SWXMPPServer.XmppServerConnection con in SWXMPPServer.Online.onlineuser)
+                {
+                    con.Stop();
+                }
+                listener.Shutdown(SocketShutdown.Both);
+                listener.Close();
+
+            }
+            catch (Exception ex)
+            {
+                //   this.Invoke(new mydelegate(this.AddMessageToList), new Object[] { ex.ToString() });
+            }
+        }
+        private void Listen()
+        {
+            try
+            {
+                IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, iServerPort);
+                listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                listener.Bind(localEndPoint);
+                listener.Listen(50);
+                m_Listening = true;
+                while (m_Listening)
+                {
+                    allDone.Reset(); // 将事件置为非信号状态
+                    listener.BeginAccept(new AsyncCallback(AcceptCallBack), null);// 开始一个异步Socket以侦听连接
+                    allDone.WaitOne(); // 等待，直到一个连接被建立之后才继续
+                }
+            }
+            catch (Exception ex)
+            {
+                //this.Invoke(new mydelegate(this.AddMessageToList), new Object[] { ex.ToString() });
+            }
+        }
+        public void AcceptCallBack(IAsyncResult ar)
+        {
+            allDone.Set();
+            Socket newSock = listener.EndAccept(ar);
+            SWXMPPServer.XmppServerConnection con = new MapDevGisFrame.Plugs.PlugPatrolTask.myXMPPServerConnection(this, newSock);
+            con.strServerIP = strServerIP;
+        }
+        public void RemoveUser(String strUser)
+        {
+            //listBoxControlUsers.Items.Remove(strUser);
+        }
+        public void AddUser(String strUser)
+        {
+            //if (!listBoxControlUsers.Items.Contains(strUser))
+            //{
+            //    listBoxControlUsers.Items.Add(strUser);
+            //}
+        }
+        public void InsertToNote(string strPeople, string strMessage)
+        {
+            string strInsert = "insert into " + _host.PrjCod + "专题_巡检_终端日志表(人员,内容,时间) values ('" + strPeople + "','" + strMessage + "','" + System.DateTime.Now.ToString("yyyy-MM-dd HH：mm：ss") + "')";
+            _host.DataConnection.ExcuteCommand(strInsert);
+            //if (listBoxControlMessage.ItemCount > 5)
+            //    listBoxControlMessage.Items.Clear();
+            //listBoxControlMessage.Items.Add(strMessage);
+        }
+        public void PrecessUserPresenceType(String strUserName, PresenceType preType)
+        {
+            if (preType == PresenceType.available)
+            {
+                lstOnLine.Add(strUserName);
+            }
+            else if (preType == PresenceType.unavailable)
+            {
+                lstOnLine.Remove(strUserName);
+            }
+        }
+        public void PrecessFileMessage(agsXMPP.protocol.client.Message msg, SWXMPPServer.swFileMessage swm)
+        {
+            if (msg == null)
+                return;
+            //if (!msg.HasTag(typeof(SWXMPPServer.swMessage)))
+            //{
+            //    return;
+            //}
+            String strFileName = swm.FileName;
+            //if (swm.TagName == "GETFAULTINFOPIC")
+            //{
+
+            //    System.IO.FileStream fs = new System.IO.FileStream("E:\\" + strFileName, FileMode.Create);
+            //    byte[] buffer = SWXMPPServer.Encrypt.DeCodeToByte(swm.Content);
+            //    // byte[] buffer = Encoding.UTF8.GetBytes(swm.Content);
+            //    fs.Write(buffer, 0, buffer.Length);
+            //    fs.Close();
+            //}
+            //else if (swm.TagName == "GETPRESSUREINFOPIC")
+            //{
+            string strPath = AppDomain.CurrentDomain.BaseDirectory.ToString() + "Images\\" + strFileName + "";
+            //System.IO.FileStream fs = new System.IO.FileStream("E:\\" + strFileName, FileMode.Create);
+            System.IO.FileStream fs = new System.IO.FileStream(strPath, FileMode.Create);
+            byte[] buffer = SWXMPPServer.Encrypt.DeCodeToByte(swm.Content);
+            // byte[] buffer = Encoding.UTF8.GetBytes(swm.Content);
+            fs.Write(buffer, 0, buffer.Length);
+            fs.Close();
+            //}
+            //String strFileName = swm.FileName + "." + swm.FileType;
+
+
+            //System.IO.FileStream fs = new System.IO.FileStream("E:\\" + strFileName, FileMode.Create);
+            //byte[] buffer = SWXMPPServer.Encrypt.DeCodeToByte(swm.Content);
+            //// byte[] buffer = Encoding.UTF8.GetBytes(swm.Content);
+            //fs.Write(buffer, 0, buffer.Length);
+            //fs.Close();
+
+            //agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+            //msgResturn.Body = "emergencyQuerTasksResturn";
+            //msgResturn.From = msg.To;
+            //msgResturn.To = msg.From;
+            //SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+            //ms.CommandName = "emergencyUpdateTaskResturn";
+            //ms.AlertType = "0";
+            //ms.Content = "";
+            //msgResturn.AddChild(ms);
+            //SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+            //SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+            //xs.Send(en, msgResturn);
+        }
+        public void PrecessMessage(agsXMPP.protocol.client.Message msg, SWXMPPServer.swMessage swm)
+        {
+             if (msg == null)
+                return;
+            if (!msg.HasTag(typeof(SWXMPPServer.swMessage)))
+            {
+                return;
+            }
+            //  MessageBox.Show(swm.CommandName);
+
+            if (swm.CommandName == "LOGIN")     //登陆
+            {
+                #region 登陆验证
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains(";"))
+                {
+                    strshuzu = msg.Body.Split(';');
+                }
+                else
+                {
+                    return;
+                }
+                string strSQL = "select * from " + _host.PrjCod + "专题_巡检_巡检用户表 where 登录名='" + strshuzu[0] + "' and 密码='" + strshuzu[1] + "'";
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strSQL, "专题_巡检_巡检用户表");
+                if (table == null || table.Rows.Count == 0)
+                {
+                    agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                    msgResturn.Body = "0";
+                    msgResturn.From = msg.To;
+                    msgResturn.To = msg.From;
+                    SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                    ms.CommandName = "LOGINRETURN";
+                    ms.AlertType = "0";
+                    ms.Content = "";
+                    msgResturn.AddChild(ms);
+                    SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                    SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                    xs.Send(en, msgResturn);
+                    InsertToNote(msg.From, "登录失败");
+                }
+                else
+                {
+                    agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                    msgResturn.Body = "1";
+                    msgResturn.From = msg.To;
+                    msgResturn.To = msg.From;
+                    SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                    ms.CommandName = "LOGINRETURN";
+                    ms.AlertType = "0";
+                    ms.Content = "";
+                    msgResturn.AddChild(ms);
+                    SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                    SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                    xs.Send(en, msgResturn);
+                    InsertToNote(msg.From, "登录成功");
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "GETTASKTABLE")    //发送任务分配表
+            {
+                #region 向终端传任务分配表
+                agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                msgResturn.Body = "";
+                msgResturn.From = msg.To;
+                msgResturn.To = msg.From;
+                SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                ms.CommandName = "GETTASKTABLERETURN";
+                ms.AlertType = "0";
+                String strXML = "";
+                #region 获取任务
+                String strCommand = "select a.ID as ID,任务名称,线路名称,用户名称,任务类型,巡检周期,任务状态,巡检意见,下发日期,版本 from (select * from " + _host.PrjCod + "专题_巡检_任务分配表) as a inner join (select * from " + _host.PrjCod + "专题_巡检_巡检用户表 where 登录名='" + msg.From.ToString() + "') as b on a.用户名称=b.姓名 order by 下发日期";
+                strCommand = _host.DataConnection.StandSql(strCommand);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand, "任务分配表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    InsertToNote(msg.From, "任务分配表为空表,下载任务分配表失败");
+                }
+                else
+                {
+                    SWXMPPServer.swTable tableResturn = new SWXMPPServer.swTable("任务分配表");
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("ID", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("任务名称", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("线路名称", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("用户名称", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("任务类型", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("巡检周期", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("任务状态", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("巡检意见", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("下发日期", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("版本", "字符串"));
+                    List<string> lstFlds = new List<string>();
+                    lstFlds.Add("ID");
+                    lstFlds.Add("任务名称");
+                    lstFlds.Add("线路名称");
+                    lstFlds.Add("用户名称");
+                    lstFlds.Add("任务类型");
+                    lstFlds.Add("巡检周期");
+                    lstFlds.Add("任务状态");
+                    lstFlds.Add("巡检意见");
+                    lstFlds.Add("下发日期");
+                    lstFlds.Add("版本");
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        SWXMPPServer.swRow row = tableResturn.CreateNewRow();
+
+
+                        for (int j = 0; j < lstFlds.Count; j++)
+                        {
+                            if (!Convert.IsDBNull(table.Rows[i][lstFlds[j]]))
+                            {
+                                row.SetCol(lstFlds[j], table.Rows[i][lstFlds[j]].ToString());
+                            }
+                            else
+                                row.SetCol(lstFlds[j], "");
+                        }
+                        tableResturn.AddRow(row);
+                    }
+                    SWXMPPServer.swTables tables = new SWXMPPServer.swTables();
+                    tables.AddTable(tableResturn);
+                    strXML = tables.ToXMLString();
+                }
+                #endregion
+                ms.Content = strXML;
+                ms.initWrite();
+                msgResturn.AddChild(ms);
+                SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                xs.Send(en, msgResturn);
+                InsertToNote(msg.From, "下载任务分配表成功");
+                #endregion
+            }
+            else if (swm.CommandName == "GETGPSDATA")
+            {
+                #region 接收GPS数据入库
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains(","))
+                {
+                    strshuzu = msg.Body.Split(',');
+                }
+                if (lstTaskID != null)
+                {
+                    if (!lstTaskID.Contains(strshuzu[0]))
+                    {
+                        lstTaskID.Add(strshuzu[0]);
+                        ReceiveGPS _ReceiveGPS = new ReceiveGPS();
+                        _ReceiveGPS._host = _host;
+                        _ReceiveGPS.strTaskID = strshuzu[0];
+                        lstReceiveGPS.Add(_ReceiveGPS);
+                    }
+                }
+                else
+                {
+                    lstTaskID.Add(strshuzu[0]);
+                    ReceiveGPS _ReceiveGPS = new ReceiveGPS();
+                    _ReceiveGPS._host = _host;
+                    _ReceiveGPS.strTaskID = strshuzu[0];
+                    lstReceiveGPS.Add(_ReceiveGPS);
+                }
+                if (lstReceiveGPS.Count > 0)
+                {
+                    for (int j = 0; j < lstReceiveGPS.Count; j++)
+                    {
+                        lstReceiveGPS[j].Init(strshuzu[0], strshuzu[1], strshuzu[2], strshuzu[3]);
+                    }
+                }
+                //入库内容，以及数据压缩
+                #endregion
+            }
+            else if (swm.CommandName == "STOPGPS")
+            {
+                #region 停止巡检，暂停巡检，关闭终端
+                if (lstReceiveGPS!=null)
+                {
+                    if (lstReceiveGPS.Count > 0)
+                    {
+                        for (int j = 0; j < lstReceiveGPS.Count; j++)
+                        {
+                            if (lstReceiveGPS[j].strTaskID == msg.Body)
+                            {
+                                lstReceiveGPS[j].StopGPS();
+                            }
+                        }
+                    }
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "GETLINETABLE")
+            {
+                #region 向终端传线路表
+                agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                msgResturn.Body = "";
+                msgResturn.From = msg.To;
+                msgResturn.To = msg.From;
+                SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                ms.CommandName = "GETLINETABLERETURN";
+                ms.AlertType = "0";
+                String strXML = "";
+                #region 获取任务
+                String strCommand = "select a.ID as ID,线路名称,坐标X,坐标Y,节点类型,节点描述,线路描述 from (select * from " + _host.PrjCod + "专题_巡检_线路表 where 线路名称='" + msg.Body + "') as a inner join (select * from " + _host.PrjCod + "专题_巡检_线路节点表) as b on a.ID=b.线路ID";
+                strCommand = _host.DataConnection.StandSql(strCommand);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand, "专题_巡检_线路表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    InsertToNote(msg.From, "线路表为空,下载线路表失败");
+                }
+                else
+                {
+                    SWXMPPServer.swTable tableResturn = new SWXMPPServer.swTable("专题_巡检_线路表");
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("ID", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("线路名称", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("坐标X", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("坐标Y", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("节点类型", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("节点描述", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("线路描述", "字符串"));
+
+                    List<string> lstFlds = new List<string>();
+                    lstFlds.Add("ID");
+                    lstFlds.Add("线路名称");
+                    lstFlds.Add("坐标X");
+                    lstFlds.Add("坐标Y");
+                    lstFlds.Add("节点类型");
+                    lstFlds.Add("节点描述");
+                    lstFlds.Add("线路描述");
+
+
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        SWXMPPServer.swRow row = tableResturn.CreateNewRow();
+
+
+                        for (int j = 0; j < lstFlds.Count; j++)
+                        {
+                            if (!Convert.IsDBNull(table.Rows[i][lstFlds[j]]))
+                            {
+                                row.SetCol(lstFlds[j], table.Rows[i][lstFlds[j]].ToString());
+                            }
+                            else
+                                row.SetCol(lstFlds[j], "");
+                        }
+                        tableResturn.AddRow(row);
+                    }
+                    SWXMPPServer.swTables tables = new SWXMPPServer.swTables();
+                    tables.AddTable(tableResturn);
+                    strXML = tables.ToXMLString();
+                }
+                #endregion
+                ms.Content = strXML;
+                ms.initWrite();
+                msgResturn.AddChild(ms);
+                SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                xs.Send(en, msgResturn);
+                InsertToNote(msg.From, "下载线路表成功");
+                #endregion
+            }
+            else if (swm.CommandName == "GETTONGBU")
+            {
+                #region 同步故障点配置表
+                agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                msgResturn.Body = "";
+                msgResturn.From = msg.To;
+                msgResturn.To = msg.From;
+                SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                ms.CommandName = "GETTONGBURETURN";
+                ms.AlertType = "0";
+                String strXML = "";
+                #region 向终端发送专题_巡检_故障点配置表
+                String strCommand = "select 编码,名称 from " + _host.PrjCod + "专题_巡检_故障点配置表 order by 编码";
+                strCommand = _host.DataConnection.StandSql(strCommand);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand, "专题_巡检_故障点配置表");
+                if (table == null || table.Rows.Count < 1)
+                {
+                    InsertToNote(msg.From, "故障点配置表为空表,下载故障点配置表失败");
+                }
+                else
+                {
+                    SWXMPPServer.swTable tableResturn = new SWXMPPServer.swTable("专题_巡检_故障点配置表");
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("编码", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("名称", "字符串"));
+
+                    List<string> lstFlds = new List<string>();
+                    lstFlds.Add("编码");
+                    lstFlds.Add("名称");
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        SWXMPPServer.swRow row = tableResturn.CreateNewRow();
+
+
+                        for (int j = 0; j < lstFlds.Count; j++)
+                        {
+                            if (!Convert.IsDBNull(table.Rows[i][lstFlds[j]]))
+                            {
+                                row.SetCol(lstFlds[j], table.Rows[i][lstFlds[j]].ToString());
+                            }
+                            else
+                                row.SetCol(lstFlds[j], "");
+                        }
+                        tableResturn.AddRow(row);
+                    }
+                    SWXMPPServer.swTables tables = new SWXMPPServer.swTables();
+                    tables.AddTable(tableResturn);
+                    strXML = tables.ToXMLString();
+                }
+                #endregion
+                ms.Content = strXML;
+                ms.initWrite();
+                msgResturn.AddChild(ms);
+                SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                xs.Send(en, msgResturn);
+                InsertToNote(msg.From, "下载故障点配置表成功");
+                #endregion
+            }
+            else if (swm.CommandName == "GETFAULTINFO")
+            {
+                #region 接收上报隐患
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                else
+                {
+                    return;
+                }
+                string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_故障点表", "最大值");
+                if (strVal == "")
+                    strVal = "0";
+                int iVal = Convert.ToInt32(strVal) + 1;
+                string strFiled = "";
+                strFiled = strFiled + "ID" + ",";
+                strFiled = strFiled + "任务ID" + ",";
+                strFiled = strFiled + "巡检时间" + ",";
+                strFiled = strFiled + "隐患名称" + ",";
+                strFiled = strFiled + "隐患大类" + ",";
+                strFiled = strFiled + "隐患小类" + ",";
+                strFiled = strFiled + "施工单位" + ",";
+                strFiled = strFiled + "占压单位" + ",";
+                strFiled = strFiled + "坐标X" + ",";
+                strFiled = strFiled + "坐标Y" + ",";
+                strFiled = strFiled + "隐患地址" + ",";
+                strFiled = strFiled + "隐患描述" + ",";
+                strFiled = strFiled + "图片路径";
+
+
+                string strContent = "";
+                strContent = strContent + iVal + ",";
+                strContent = strContent + "" + strshuzu[0] + ",";
+                strContent = strContent + "'" + strshuzu[1] + "',";
+                strContent = strContent + "'" + strshuzu[2] + "',";
+                strContent = strContent + "'" + strshuzu[3] + "',";
+                strContent = strContent + "'" + strshuzu[4] + "',";
+                strContent = strContent + "'" + strshuzu[5] + "',";
+                strContent = strContent + "'" + strshuzu[6] + "',";
+                strContent = strContent + "'" + strshuzu[7] + "',";
+                strContent = strContent + "'" + strshuzu[8] + "',";
+                strContent = strContent + "'" + strshuzu[9] + "',";
+                strContent = strContent + "'" + strshuzu[10] + "',";
+                strContent = strContent + "'" + strshuzu[11] + "'";
+                string strInsert = "insert into " + _host.PrjCod + "专题_巡检_故障点表(" + strFiled + ") values (" + strContent + ")";
+                _host.DataConnection.ExcuteCommand(strInsert);
+                if (_Alarmlabel != null)
+                {
+                    strMessage = msg.From.ToString() + strshuzu[2] + "在" + strshuzu[9] + "上报隐患";
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "GETPRESSUREINFO")
+            {
+                #region 接收上报压力隐患
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_调压箱记录表", "最大值");
+                if (strVal == "")
+                    strVal = "0";
+                int iVal = Convert.ToInt32(strVal) + 1;
+                string strFiled = "";
+                strFiled = strFiled + "ID" + ",";
+                strFiled = strFiled + "任务ID" + ",";
+                strFiled = strFiled + "巡检时间" + ",";
+                strFiled = strFiled + "调压箱名" + ",";
+                strFiled = strFiled + "进口压力1" + ",";
+                strFiled = strFiled + "进口压力2" + ",";
+                strFiled = strFiled + "出口压力1" + ",";
+                strFiled = strFiled + "出口压力2" + ",";
+                strFiled = strFiled + "运行隐患" + ",";
+                strFiled = strFiled + "坐标X" + ",";
+                strFiled = strFiled + "坐标Y" + ",";
+                strFiled = strFiled + "隐患地址" + ",";
+                strFiled = strFiled + "隐患描述" + ",";
+                strFiled = strFiled + "图片路径";
+
+
+                string strContent = "";
+                strContent = strContent + iVal + ",";
+                strContent = strContent + "" + strshuzu[0] + ",";
+                strContent = strContent + "'" + strshuzu[1] + "',";
+                strContent = strContent + "'" + strshuzu[2] + "',";
+                strContent = strContent + "'" + strshuzu[3] + "',";
+                strContent = strContent + "'" + strshuzu[4] + "',";
+                strContent = strContent + "'" + strshuzu[5] + "',";
+                strContent = strContent + "'" + strshuzu[6] + "',";
+                strContent = strContent + "'" + strshuzu[7] + "',";
+                strContent = strContent + "'" + strshuzu[8] + "',";
+                strContent = strContent + "'" + strshuzu[9] + "',";
+                strContent = strContent + "'" + strshuzu[10] + "',";
+                strContent = strContent + "'" + strshuzu[11] + "'";
+                string strInsert = "insert into " + _host.PrjCod + "专题_巡检_调压箱记录表(" + strFiled + ") values (" + strContent + ")";
+                _host.DataConnection.ExcuteCommand(strInsert);
+                if (_Alarmlabel != null)
+                {
+                    strMessage = msg.From.ToString() + strshuzu[2] + "在" + strshuzu[9] + "上报压力隐患";
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "GETSTARTWORK")
+            {
+                #region 人员考勤表上班字段
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                else
+                {
+                    return;
+                }
+                string strFind = "select * from " + _host.PrjCod + "专题_巡检_员工签到表 where 用户名称='" + strshuzu[0] + "' and DATEDIFF('d',上班时间,'" + strshuzu[1] + "')= 0";
+                string strStartTime = _host.DataConnection.GetFldValue(strFind, "上班时间");
+                if (strStartTime != "")
+                {
+                    return;
+                }
+                else
+                {
+                    string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_员工签到表", "最大值");
+                    if (strVal == "")
+                        strVal = "0";
+                    int iVal = Convert.ToInt32(strVal) + 1;
+
+                    string strInsert = "insert into " + _host.PrjCod + "专题_巡检_员工签到表(ID,用户名称,上班时间) values (" + iVal + ",'" + strshuzu[0] + "','" + strshuzu[1] + "')";
+                    _host.DataConnection.ExcuteCommand(strInsert);
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "GETSTOPWORK")
+            {
+                #region 人员考勤表下班字段
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                else
+                {
+                    return;
+                }
+
+                string strFind = "select * from " + _host.PrjCod + "专题_巡检_员工签到表 where 用户名称='" + strshuzu[0] + "' and DATEDIFF('d',下班时间,'" + strshuzu[1] + "')= 0";
+                string strStopTime = _host.DataConnection.GetFldValue(strFind, "下班时间");
+                if (strStopTime != "")
+                {
+                    return;
+                }
+                else
+                {
+                    string strUpdate = "update " + _host.PrjCod + "专题_巡检_员工签到表 set 下班时间='" + strshuzu[1] + "' where 用户名称='" + strshuzu[0] + "' and DATEDIFF('d',上班时间,'" + strshuzu[1] + "')= 0";
+                    _host.DataConnection.ExcuteCommand(strUpdate);
+                }
+                #endregion
+            }
+            else if(swm.CommandName == "STARTCHECK")
+            {
+                #region 开始巡检
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                else
+                {
+                    return;
+                }
+                string strFind = "select * from " + _host.PrjCod + "专题_巡检_具体任务表 where 用户名称='" + strshuzu[0] + "' and 任务ID=" + strshuzu[1] + " and DATEDIFF('d',开始时间,'" + strshuzu[2] + "')= 0";
+                string strStartTime = _host.DataConnection.GetFldValue(strFind, "开始时间");
+                if (strStartTime != "")
+                {
+                    return;
+                }
+                else
+                {
+                    string strVal = _host.DataConnection.GetFldValue("select max(ID) as 最大值 from  " + _host.PrjCod + "专题_巡检_具体任务表", "最大值");
+                    if (strVal == "")
+                        strVal = "0";
+                    int iVal = Convert.ToInt32(strVal) + 1;
+
+                    string strInsert = "insert into " + _host.PrjCod + "专题_巡检_具体任务表(ID,用户名称,任务ID,开始时间) values (" + iVal + ",'" + strshuzu[0] + "','" + strshuzu[1] + "','" + strshuzu[2] + "')";
+                    _host.DataConnection.ExcuteCommand(strInsert);
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "STOPCHECK")
+            {
+                #region 结束巡检
+                string[] strshuzu = new string[] { };
+                if (msg.Body.Contains("@"))
+                {
+                    strshuzu = msg.Body.Split('@');
+                }
+                else
+                {
+                    return;
+                }
+                string strFind = "select * from " + _host.PrjCod + "专题_巡检_具体任务表 where 用户名称='" + strshuzu[0] + "' and 任务ID=" + strshuzu[1] + " and DATEDIFF('d',结束时间,'" + strshuzu[2] + "')= 0";
+                string strStartTime = _host.DataConnection.GetFldValue(strFind, "结束时间");
+                if (strStartTime != "")
+                {
+                    return;
+                }
+                else
+                {
+                    string strUpdate = "update " + _host.PrjCod + "专题_巡检_具体任务表 set 结束时间='" + strshuzu[2] + "' where 用户名称='" + strshuzu[0] + "' and 任务ID=" + strshuzu[1] + " and DATEDIFF('d',开始时间,'" + strshuzu[2] + "')= 0";
+                    _host.DataConnection.ExcuteCommand(strUpdate);
+                }
+                #endregion
+            }
+            else if (swm.CommandName == "emergencyQuerTasks")
+            {
+                #region 测试
+                agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                msgResturn.Body = "emergencyQuerTasksResturn";
+                msgResturn.From = msg.To;
+                msgResturn.To = msg.From;
+                SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                ms.CommandName = "emergencyQuerTasksResturn";
+                ms.AlertType = "0";
+                String strXML = "";
+                #region 获取任务
+                String strCommand = "select ID,单位,表号年,表号序号,接警人,接警时间,接警电话,报警单位,报警人,报警电话,险情地址区域 ,险情地址位置,险情描述,险情图形位置X,险情图形位置Y,出警时间,出警单位,出警人 ,任务状态 from " + _host.PrjCod + "专题_抢险_任务表单 where  任务状态='已下达' order by ID desc";
+                strCommand = _host.DataConnection.StandSql(strCommand);
+                System.Data.DataTable table = _host.DataConnection.CreateCommanDataTable(strCommand, "任务单");
+                if (table == null || table.Rows.Count < 1)
+                {
+
+                }
+                else
+                {
+                    SWXMPPServer.swTable tableResturn = new SWXMPPServer.swTable("任务单");
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("ID", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("单位", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("接警人", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("接警时间", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("报警单位", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("报警人", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("报警电话", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("险情地址区域", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("险情地址位置", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("险情描述", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("险情图形位置X", "字符串"));
+                    tableResturn.AddColumn(new SWXMPPServer.swColumn("险情图形位置Y", "字符串"));
+
+                    List<string> lstFlds = new List<string>();
+                    lstFlds.Add("ID");
+                    lstFlds.Add("单位");
+                    lstFlds.Add("接警人");
+                    lstFlds.Add("接警时间");
+                    lstFlds.Add("报警单位");
+                    lstFlds.Add("报警人");
+                    lstFlds.Add("报警电话");
+                    lstFlds.Add("险情地址区域");
+                    lstFlds.Add("险情地址位置");
+                    lstFlds.Add("险情描述");
+                    lstFlds.Add("险情图形位置X");
+                    lstFlds.Add("险情图形位置Y");
+
+
+                    for (int i = 0; i < table.Rows.Count; i++)
+                    {
+                        SWXMPPServer.swRow row = tableResturn.CreateNewRow();
+
+
+                        for (int j = 0; j < lstFlds.Count; j++)
+                        {
+                            if (!Convert.IsDBNull(table.Rows[i][lstFlds[j]]))
+                            {
+                                row.SetCol(lstFlds[j], table.Rows[i][lstFlds[j]].ToString());
+                            }
+                            else
+                                row.SetCol(lstFlds[j], "");
+                        }
+                        tableResturn.AddRow(row);
+                    }
+                    SWXMPPServer.swTables tables = new SWXMPPServer.swTables();
+                    tables.AddTable(tableResturn);
+                    strXML = tables.ToXMLString();
+                }
+                #endregion
+                ms.Content = strXML;
+                ms.initWrite();
+                msgResturn.AddChild(ms);
+                SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                xs.Send(en, msgResturn);
+                #endregion
+            }
+            else if (swm.CommandName == "emergencyUpdateTask")
+            {
+                #region 测试
+                if (swm.Content != "")
+                {
+                    swm.initReader();
+                    SWXMPPServer.swTables tables = new SWXMPPServer.swTables();
+                    tables.LoadFromXML(swm.DecodeContent);
+                    if (tables.TablesCount == 1)
+                    {
+                        SWXMPPServer.swTable table = tables.Tables[0];
+                        for (int i = 0; i < table.RowsCount; i++)
+                        {
+                            String strID = table.Rows[i].GetCol("ID");
+                            String strName = table.Rows[i].GetCol("险情描述");
+                            if (strID != "")
+                            {
+                                string strCommand = "update " + _host.PrjCod + "专题_抢险_任务表单 set 险情描述='" + strName + "' where ID=" + strID;
+                                _host.DataConnection.ExcuteCommand(strCommand);
+                            }
+                        }
+                        ////AddMessageToList(msg.From + "更新了任务列表");
+                        agsXMPP.protocol.client.Message msgResturn = new agsXMPP.protocol.client.Message();
+                        msgResturn.Body = "emergencyQuerTasksResturn";
+                        msgResturn.From = msg.To;
+                        msgResturn.To = msg.From;
+                        SWXMPPServer.swMessage ms = new SWXMPPServer.swMessage();
+                        ms.CommandName = "emergencyUpdateTaskResturn";
+                        ms.AlertType = "0";
+                        ms.Content = "";
+                        msgResturn.AddChild(ms);
+                        SWXMPPServer.XmppServerConnection xs = new SWXMPPServer.XmppServerConnection(this);
+                        SWXMPPServer.enum_ en = SWXMPPServer.enum_.grxx;
+                        xs.Send(en, msgResturn);
+                    }
+                }
+                #endregion
+            }
+        }
+
+    }
+}

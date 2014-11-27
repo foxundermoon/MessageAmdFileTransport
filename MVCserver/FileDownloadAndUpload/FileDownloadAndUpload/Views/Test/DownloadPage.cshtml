@@ -1,0 +1,31 @@
+﻿@{
+    ViewBag.Title = "DownloadPage";
+    List<FileDownloadAndUpload.Models.File>  files = ViewBag.Files;
+}
+
+<h2>DownloadPage</h2>
+<ul>
+
+    @{
+        foreach (var item in files)
+        {
+             <li class="downlond-item">
+                <span> 文件名:@item.Name</span>
+           @try
+            {
+                 DateTime  dt = DateTime.FromBinary(BitConverter.ToInt64(item.UploadTime, 0));
+                <span>上传日期:@dt.ToString()</span>
+                
+            }
+            catch(Exception e)
+            {
+                <span>上传日期:null</span>
+                
+            }
+           
+                <span>大小:@item.Size</span>
+                <span><a href="../download?fid=@item.ID">下载</a></span>
+            </li>
+        }
+    }
+</ul>

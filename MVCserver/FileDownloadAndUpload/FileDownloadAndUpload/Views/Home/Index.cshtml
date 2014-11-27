@@ -1,0 +1,43 @@
+﻿@{
+    ViewBag.Title = "Home";
+
+}
+<div class="container mini-layout fluid">
+
+    <div style="width:960px;" class="fluid-container">
+        <h1>Message server information!</h1>
+        <div class="row-fluid">
+            <div class="span3">
+                <ol>
+                    <li><a class="btn" _href="Client" title="Client">客户端详情</a></li>
+                    <li>
+                        <a class="btn" _href="Test" title="upload test">上传文件测试页面</a>
+                    </li>
+                    <li><a class="btn" _href="Test/downloadpage" title="download file test">下载文件测试</a></li>
+                    <li><a class="btn" _href="../Test/Reg" >注  册</a></li>
+                    <li><a class="btn" _href="Client/broadcast"  href="#" >消息广播</a></li>
+                </ol>
+            </div>
+                <iframe  src=" client" class="span7"></iframe>
+        </div>
+    </div>
+
+
+
+
+
+    <p id="p1"></p>
+
+  
+</div>
+
+
+
+
+<script>
+    $(document).ready(function () {
+        $("li a").click(function () {
+            $("iframe").attr("src", $(this).attr("_href"));
+        })
+    });
+</script>

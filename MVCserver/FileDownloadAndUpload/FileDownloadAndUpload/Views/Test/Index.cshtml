@@ -1,0 +1,21 @@
+﻿@model FileDownloadAndUpload.Models.File
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+@ViewBag.Msg
+    @*id= @ViewBag.id*@
+<br />
+
+
+    @{using (Html.BeginForm("index", "upload", FormMethod.Post, new { enctype = "multipart/form-data"}))
+      {
+          //"name：" + @Html.TextBox("Name") + " <br />";
+          <input type="file" name="file_1" />
+        <input type="file" name="file_2" />
+        <br />
+
+       <input id="Submit" type="submit" value="上传" />
+      }
+      }

@@ -1,0 +1,56 @@
+﻿@model FileDownloadAndUpload.Models.User
+
+@{
+    ViewBag.Title = "Reg";
+}
+@using (Html.BeginForm("Reg", "User", FormMethod.Get))
+{
+    <fieldset>
+        <legend>注册用户</legend>
+        @Html.AntiForgeryToken()
+        @Html.LabelFor(user => user.Email)
+        @Html.EditorFor(user => user.Email)
+        @Html.ValidationMessageFor(user => user.Email, null, new { @class = "help-inline" })
+
+        @Html.LabelFor(user => user.Password)
+        @Html.EditorFor(user => user.Password)
+        @Html.ValidationMessageFor(user => user.Password, null, new { @class = "help-inline" })
+        <input type="submit" value="save" />
+    </fieldset>
+
+
+}
+
+
+
+
+
+
+@*@{
+        var opts = new AjaxOptions
+        {
+            HttpMethod = "Get",
+            LoadingElementDuration = 1000,
+            LoadingElementId = "loading",
+
+        };
+    }
+    <div id="loading" class="popup_background" style="display:none">
+        <div class="popup_loading">
+            <p>Loading...</p>
+        </div>
+    </div>
+    @using (Html.BeginForm( "broadcast","message",FormMethod.Post))
+    {
+        Html.AntiForgeryToken();
+        Html.ValidationSummary(true);
+        <fieldset >
+            <legend>
+                广播消息
+            </legend>
+            <label>消息内容</label>
+            <textarea id="broadcast"></textarea>
+            <input id="broadcast-submit" type="button" />
+
+        </fieldset>
+    }*@

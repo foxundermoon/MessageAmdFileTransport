@@ -1,0 +1,240 @@
+insert into "User" (UserId, Name, RegTime, LastLogin) values (11, '2HAY7XUV DWP6V7WFIFE', '595-8-18 6:15:53', '1716-8-26 14:29:39')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (0, '6NJGB1L9M0HDC2Y1S579', '1057-11-30 9:6:29', '1395-4-26 12:15:9')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (6, '2N6 MMP7UVLQEGW5OEK1', '176-2-12 2:23:55', '304-5-27 2:40:31')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (4, '563NHW6E82FIYNDLQCSE', '738-10-6 6:40:12', '713-10-31 6:18:43')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (7, ' MLHBMDBWC28568U4FRF', '368-6-21 4:14:13', '1528-7-21 13:4:39')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (10, ' MYTSIWHE9NVD 3414WB', '1-1-1 0:0:0', '786-12-6 6:57:9')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (13, 'UEDX7KSXE763DMB6ULXB', '462-1-11 4:46:40', '499-6-26 4:52:42')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (12, 'VRI6PF9MRG65P7MPQ9BN', '1451-9-14 12:45:39', '76-8-14 0:32:17')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (5, 'BH0V9N0A7WPMTC5ABX5Y', '1178-6-5 10:4:7', '1062-12-7 8:58:1')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (14, '19I9I453GBU5M3X4UF4B', '1630-8-24 14:47:10', '1588-7-18 13:55:48')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (17, 'S4GW0MVIF8XVPEPHX56I', '917-1-21 7:51:45', '1-1-1 0:0:0')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (8, 'EYW0YLK3JU5Q6JJGOEHN', '1580-2-24 13:49:45', '934-4-18 8:19:51')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (15, '0OR5TT21KW29TLL6M6L ', '980-11-15 8:25:13', '1317-6-10 11:50:49')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (1, '3Y9JT58M7PCVR9VCRMIL', '266-12-27 3:0:57', '210-8-21 1:33:42')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (18, 'PP3KBQK0TNRUJ 22WKWJ', '124-12-23 1:11:20', '1166-12-24 10:11:25')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (2, 'BKDQ9PH164F7GIOKQ4YB', '1312-9-24 11:12:7', '1225-6-22 11:1:19')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (9, 'DJUO59R1F3XB0C 8SAWO', '537-3-18 5:15:2', '395-11-22 3:50:25')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (19, '1RPBOX7B6KGA20LCHB N', '1530-9-27 13:16:27', '647-10-15 5:49:17')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (16, '7ORYJF4QF0DKK3UR194Q', '804-12-17 7:4:40', '883-4-17 7:42:55')
+go
+
+
+insert into "User" (UserId, Name, RegTime, LastLogin) values (3, '33AHBUUPGU GPWTBGEA2', '1399-3-15 12:17:35', '1840-10-23 15:27:28')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (6, 'TNQQKBYRCYL8COKF79CO', 18, 17, 'AAPS66TGXM1HS6WUI4TMOX9X X9VDOA1', '641-10-18 5:23:54')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (10, 'KX4XXKOEVJN0FMEIFV15', 15, 1, 'X1H28CJLI2JKV9J0AJE2IYWJ9R50KGOD', '1357-7-18 11:38:34')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (1, '17217NMHLROOS41LKUM9', 1, 19, 'BNT4NKE2RHSC3J6VTEYGVHDU2IKWSOL3', '939-4-28 8:14:8')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (4, '3L1HE3KP8WPK2YNRJ9I7', 17, 7, 'UKL 86QN8JTT9R3QO5TD8LH69J2XDIBR', '128-1-4 1:55:45')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (19, 'LQQ7TSMLPOMVGWFPRCQ3', 3, 15, 'O2A1CT6AJCWDAV6UT6M3K5N7CWYO12SJ', '759-6-14 6:33:25')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (11, 'WUXFMVLW6EKSTJOPIQXA', 14, 18, 'FH6O4AKOM87S8TRFQ5NW4H0YLRWCJD3A', '1154-10-10 9:39:25')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (9, 'PA5Y58OCRRWV6TPY5ROC', 10, 5, 'IRM50L81A8YOHQO4QD91G66R7 O0XOWD', '1038-6-22 8:52:58')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (5, 'MQ6C7ME3GBVV55AK33P ', 8, 12, '6KYNPS4X00DJPXC YSUMFWBF220NFACK', '1568-3-5 13:47:24')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (12, '0WMMLI2BGM8G6JRVYP4M', 0, 8, 'D6K977MB4VQUUTOI90SP6J33W5O4OS41', '232-1-16 2:19:38')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (8, '2NLH QM90JE3BI1ADC2L', 2, 9, 'VJV R8OMPTCX3 6IBBI842RE52HAISIC', '1847-9-29 16:53:54')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (16, 'JK1W0RRBJIS HG33CT8X', 7, 0, '98CPXHSMNHJ1 7S9KNI1YO1B39BT247F', '1632-2-15 14:55:27')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (7, 'ECQ0TGPAMDSRQXJTYYMI', 5, 13, 'UJF8LP HK6OB9D2H7KAWMO78SU1BRUIP', '1237-2-5 10:40:8')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (2, 'R0PAP2IPP8RXIXP2XRTG', 4, 2, 'QCOATSTVXT5U K278CBHFJ402NKAB0AY', '344-6-29 3:15:13')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (0, '7XS3DYL8Q4LS59TR2GBJ', 6, 3, 'T8LH0SBQX1ELJ0DYHU7CWX3SH2U7O UD', '1421-8-21 12:39:59')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (14, 'R08N7BSFN24JI0VQMMIM', 13, 10, 'SFSCVX5KK4VFI23LHNK TL09G7TC673I', '538-6-16 4:29:49')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (3, '1WVIKLSEY622HT7K GDR', 16, 6, '3SV9CKG4LY14TAWGLXYRBI9E5SJ A9FG', '479-5-8 3:45:57')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (13, 'FSQ35N7SY VDGSAB70LF', 19, 14, ' WGNN8UNM3HDNBY8XL2YSSTOI9 7VYTJ', '1-1-1 0:0:0')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (18, 'T9VAJ1KI2WQ027AC4BL3', 9, 11, 'FX7OCMLTYUOSH2 1E4KSVO4XAOA426PM', '49-6-24 0:50:59')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (17, '8HH49AKCW3M1HIJ 2OHA', 12, 16, 'APUI8JEMP19V1H7EQQ7DIK6DYQIM705W', '858-8-29 7:13:53')
+go
+
+
+insert into "File" (FileID, Name, Size, UploadSize, MD5, UploadTime) values (15, '1Y1Q13X435Y9QRS GLFL', 11, 4, '4S38E0JKT8U DRF7C8POY3JOTSRM QN1', '1774-2-17 15:54:38')
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (11, 6)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (0, 10)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (6, 1)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (4, 4)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (7, 19)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (10, 11)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (13, 9)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (12, 5)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (5, 12)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (14, 8)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (17, 16)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (8, 7)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (15, 2)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (1, 0)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (18, 14)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (2, 3)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (9, 13)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (19, 18)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (16, 17)
+go
+
+
+insert into UserFileRelationShip (UserId, FileID) values (3, 15)
+go
+
+
