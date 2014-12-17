@@ -1,0 +1,38 @@
+﻿@model FileDownloadAndUpload.Models.User
+@{
+    ViewBag.Title = "Login";
+}
+
+@using(Html.BeginForm())
+{
+    int  code = new Random().Next(5555);
+    @Html.ValidationSummary(true, "login failed!");
+    <div>
+        <fieldset>
+            <legend>login</legend>
+            <div class="editor-label">
+                @Html.LabelFor(u => u.Name)
+            </div>
+            <div class="editor-field">
+                @Html.TextBoxFor(u=>u.Name)
+            </div>
+            <div class="editor-label">
+                @Html.LabelFor(u=>u.Password)
+            </div>
+            <div class="editor-field">
+                @Html.TextBoxFor(u=>u.Password)
+            </div>
+            <div class="editor-label">
+                @Html.Label("验证码")
+            </div>
+            <div class="editor-field">
+                @Html.TextBox("vcode")
+            </div>
+            <div class="editor-label">
+                <img src="/Common/Vcode?code=@code" />
+            </div>
+            <input type="submit" value="Login" />
+        </fieldset>
+    </div>
+    
+}

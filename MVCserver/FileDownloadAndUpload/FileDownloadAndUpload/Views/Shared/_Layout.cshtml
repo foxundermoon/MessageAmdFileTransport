@@ -11,9 +11,22 @@
     @Scripts.Render("~/Content/bootstrap/js/bootstrap.js")
 </head>
 <body>
+    <div class="herder">
+        @if (Request.IsAuthenticated)
+        {
+            <strong>@Html.Encode(User.Identity.Name)</strong>
+            @Html.ActionLink("退出", "Logout", "Account")
+        }
+        else
+        {
+            @Html.ActionLink("注册", "Register", "Account")
+            <span>|</span>
+            @Html.ActionLink("登录", "Login", "Account");
+        }
+    </div>
+    @RenderBody()
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/jqueryui")
-    @RenderBody()
     @RenderSection("scripts", required: false)
 </body>
 </html>

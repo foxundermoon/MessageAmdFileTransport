@@ -130,7 +130,10 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="App_Start\XmppConfig.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\BitMap.cs" />
     <Compile Include="Controllers\ClientController.cs" />
+    <Compile Include="Controllers\CommonController.cs" />
     <Compile Include="Controllers\DownloadController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\Setting.cs" />
@@ -140,6 +143,7 @@
     <Compile Include="Core\Account\Account.cs" />
     <Compile Include="Core\Account\AccountBus.cs" />
     <Compile Include="Core\Common\MessageEntityFictory.cs" />
+    <Compile Include="Core\Common\ValidateCode.cs" />
     <Compile Include="Core\Utils\HashHelper.cs" />
     <Compile Include="Core\Utils\MyMd5.cs" />
     <Compile Include="Core\Utils\TimeHelper.cs" />
@@ -309,6 +313,8 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Test\DownloadPage.cshtml" />
     <Content Include="Views\Test\Reg.cshtml" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Account\Register.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

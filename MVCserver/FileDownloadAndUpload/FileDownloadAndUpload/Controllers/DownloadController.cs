@@ -16,6 +16,7 @@ namespace FileDownloadAndUpload.Controllers
 
 
 
+
         public DownloadController()
         {
             entis = new MessageEntities1();
@@ -24,14 +25,14 @@ namespace FileDownloadAndUpload.Controllers
         // GET: /Download/
 
 
-        public string Index(int  fid)
+        public string Index(int fid)
         {
             Models.File f = entis.File.Find(fid);
             if (f == null)
                 return "file is not found!!";
-            string fileDir =Request.MapPath("UploadFiles");
+            string fileDir = Request.MapPath("UploadFiles");
             string filePath = fileDir + Path.DirectorySeparatorChar + f.MD5;
-            if (DownloadFile(HttpContext, filePath, 100,f.MD5))
+            if (DownloadFile(HttpContext, filePath, 100, f.MD5))
             {
                 return null;
             }
@@ -42,7 +43,45 @@ namespace FileDownloadAndUpload.Controllers
             //return View();
         }
 
-        public static bool DownloadFile(HttpContextBase httpContext, string filePath, long speed,string md5)
+        public string byMd5(string md5)
+        {
+            Models.File f = null;
+            var query = from file in entis.File
+                        where file.MD5 == md5
+                        select file;
+            //Models.File f = entis.File.Where((_f)=>_f.MD5==md5).ElementAtOrDefault(0);
+            if (query != null)
+            {
+                foreach(var _f in query){
+                    Console.Write(""+_f.ToString());
+                }
+                Models.File file = query.FirstOrDefault();
+            }
+            if (f != null)
+            {
+                string fileDir = Request.MapPath("UploadFiles");
+                string filePath = fileDir + Path.DirectorySeparatorChar + f.MD5;
+                
+              
+                if (DownloadFile(HttpContext, filePath, 100, f.MD5))
+                {
+                    return null;
+                }
+                else
+                {
+                    return "failed ";
+                }
+            }
+            else
+            {
+                var __f = entis.File.Where(_f => _f.MD5 == md5).FirstOrDefault();
+                String s = __f.MD5;
+                return "nut found by the md5:" + md5;
+            }
+
+        }
+
+        public static bool DownloadFile(HttpContextBase httpContext, string filePath, long speed, string md5)
         {
             bool ret = true;
             try
@@ -155,8 +194,8 @@ namespace FileDownloadAndUpload.Controllers
 
         private static string GetMD5Hash(string myFile)
         {
-           return  HashHelper.MD5File(myFile);
-        }  
+            return HashHelper.MD5File(myFile);
+        }
 
     }
 }

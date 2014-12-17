@@ -23,7 +23,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
         public List<XmppSeverConnection> XmppConnectionList { get; private set; }
         public Dictionary<int, XmppSeverConnection> XmppConnectionDic { get; private set; }
         public List<XmppHandler> XmppHandlers = new List<XmppHandler>();
-        public event Action ConnectionEncrease ;//{ get; set; }
+        public event Action ConnectionEncrease;//{ get; set; }
         public event Action ConnectionDecrease;
         private XmppServer()
         {
@@ -59,7 +59,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
 
         private void watch()
         {
-            while(true)
+            while (true)
             {
                 int count = XmppConnectionDic.Count;
                 Thread.Sleep(1000);
@@ -130,9 +130,9 @@ namespace FileDownloadAndUpload.Core.Xmpp
             //allDone.Reset();
         }
 
-        public void Broadcast(string strMsg,Broadcast.Type type)
+        public void Broadcast(string strMsg, Broadcast.Type type)
         {
-            if(type==Xmpp.Broadcast.Type.Message )
+            if (type == Xmpp.Broadcast.Type.Message)
             {
                 Message msg = new Message();
                 msg.From = new Jid("0@10.80.5.222/Server");
@@ -144,7 +144,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
                 }
 
             }
-            if(type ==Xmpp.Broadcast.Type.Notification)
+            if (type == Xmpp.Broadcast.Type.Notification)
             {
 
                 IQ notificationIQ = new IQ();
@@ -162,6 +162,12 @@ namespace FileDownloadAndUpload.Core.Xmpp
                     con.Value.Send(notificationIQ);
                 }
 
+
+                //<iq xmlns="jabber:client" from="0@10.80.5.222/Server">
+                    //<notification xmlns="androidpn:iq:notification">
+                        //<id>3fada5a4-3f2e-4652-bf8c-01bb4df0debb</id>
+                    //</notification>
+                //</iq>
 
             }
         }
@@ -186,19 +192,29 @@ namespace FileDownloadAndUpload.Core.Xmpp
         /// </summary>
         /// <param name="id">客户端  或者用户id</param>
         /// <param name="strMsg">发送的数据</param>
-        public void Unicast(int id,string strMsg)
+        public void Unicast(int id, string strMsg)
         {
-            if(XmppConnectionDic.ContainsKey(id))
+            if (XmppConnectionDic.ContainsKey(id))
             {
                 XmppSeverConnection value;
-                if(XmppConnectionDic.TryGetValue(id, out value))
+                if (XmppConnectionDic.TryGetValue(id, out value))
                 {
                     Message msg = new Message();
                     msg.To = new Jid(id + "@10.80.5.222");
-                    msg.Body=strMsg;
+                    msg.Body = strMsg;
                     value.Send(msg);
                 }
 
+            }
+        }
+
+        internal void Broadcast(agsXMPP.protocol.Base.Stanza reply)
+        {
+            foreach (var con in XmppConnectionDic)
+            {
+                Jid to = new Jid(con.Key + "@10.80.5.222");
+                reply.To = to;
+                con.Value.Send(reply);
             }
         }
     }
