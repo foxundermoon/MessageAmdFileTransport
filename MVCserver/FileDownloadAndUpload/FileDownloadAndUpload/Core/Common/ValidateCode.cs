@@ -2,29 +2,70 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Web;
 
 namespace FileDownloadAndUpload.Core.Common
 {
     public class ValidateCode
     {
+        static char[][] numbers;
+        static object myLock = new object();
+        public static char[][] Numbers
+        {
+            get
+            {
+                lock (myLock)
+                {
+
+                    if (numbers == null)
+                    {
+                        numbers = new char[][] { 
+                        "零oO0〇".ToCharArray(),
+                        "一一1①Ⅰ壹I㈠".ToCharArray(),
+                        "二Ⅱ贰②㈡".ToCharArray(),
+                        "三3叁Ⅲ③彡氵Ⅲ弎㈢参".ToCharArray(),
+                        "四④4Ⅳ肆泗亖㈣".ToCharArray(),
+                        "五5⑤Ⅴ㈤伍午吴".ToCharArray(),
+                        "六6⑥Ⅵ陆流留陸㈥".ToCharArray(),
+                        "七7Ⅶ⑦柒㈦".ToCharArray(),
+                        "八8⑧Ⅷ捌㈧玐仈".ToCharArray(),
+                        "九9⑨Ⅸ久玖氿㈨勼".ToCharArray()
+                        };
+                    }
+                    return numbers;
+                }
+
+            }
+        }
+
+        public static string EncodeCode(string intcode)
+        {
+            Random r = new Random();
+            StringBuilder sb = new StringBuilder();
+            foreach(var n in Numbers)
+            {
+                sb.Append(n[r.Next(0, n.Length - 1)]);
+            }
+            return sb.ToString();
+        }
+
         public static string GenerateCode(int length)
         {
-            char[] allchars = "0123456789abcdefghigklmnopqrstuvwxyz".ToArray();
-            char[] result = new char[length];
+            //char[] allchars = "0123456789abcdefghigklmnopqrstuvwxyz".ToArray();
+            StringBuilder sb = new StringBuilder();
             Random r = new Random();
             for (int i = 0; i < length; i++)
             {
-                result[i] = allchars[r.Next(0, 36)];
+                sb.Append(r.Next(0, 9));
             }
-            return new string(result);
+            return sb.ToString();
         }
 
-        internal static System.Web.Mvc.ActionResult WriteImage(string code, HttpResponseBase Response)
+        public static System.Web.Mvc.ActionResult WriteImage(string encoded, HttpResponseBase Response)
         {
-            string randomcode = code;
             int randAngle = 10; //随机转动角度  
-            int mapwidth = (int)(randomcode.Length * 23);
+            int mapwidth = (int)(encoded.Length * 23);
             Bitmap map = new Bitmap(mapwidth, 28);//创建图片背景  
             Graphics graph = Graphics.FromImage(map);
             graph.Clear(Color.AliceBlue);//清除画面，填充背景  
@@ -40,7 +81,7 @@ namespace FileDownloadAndUpload.Core.Common
                 graph.DrawRectangle(blackPen, x, y, 1, 1);
             }
             //验证码旋转，防止机器识别    
-            char[] chars = randomcode.ToCharArray();//拆散字符串成单字符数组  
+            char[] chars = encoded.ToCharArray();//拆散字符串成单字符数组  
             //文字距中  
             StringFormat format = new StringFormat(StringFormatFlags.NoClip);
             format.Alignment = StringAlignment.Center;

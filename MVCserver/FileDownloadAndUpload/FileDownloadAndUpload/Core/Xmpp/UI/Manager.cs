@@ -27,8 +27,8 @@ namespace FileDownloadAndUpload.Core.Xmpp.UI
 
         private void InitializeOther()
         {
-            xmppserver.ConnectionEncrease += xmppserver_ConnectionEncrease;
-            xmppserver.ConnectionDecrease += xmppserver_ConnectionDecrease;
+            //xmppserver.ConnectionEncrease += xmppserver_ConnectionEncrease;
+            //xmppserver.ConnectionDecrease += xmppserver_ConnectionDecrease;
             foreach(var item in xmppserver.XmppConnectionDic)
             {
                 listView1.Items.Add(item.Key+"");

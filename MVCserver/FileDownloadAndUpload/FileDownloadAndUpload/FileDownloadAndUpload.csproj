@@ -131,7 +131,6 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="App_Start\XmppConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
-    <Compile Include="Controllers\BitMap.cs" />
     <Compile Include="Controllers\ClientController.cs" />
     <Compile Include="Controllers\CommonController.cs" />
     <Compile Include="Controllers\DownloadController.cs" />
@@ -152,6 +151,7 @@
     <Compile Include="Core\Xmpp\Handler\IQHandler.cs" />
     <Compile Include="Core\Xmpp\Handler\MessageHandler.cs" />
     <Compile Include="Core\Xmpp\Handler\MyMessageHandler.cs" />
+    <Compile Include="Core\Xmpp\Handler\NodeHandler.cs" />
     <Compile Include="Core\Xmpp\Handler\PresenceHandler.cs" />
     <Compile Include="Core\Xmpp\MessageHandle.cs" />
     <Compile Include="Core\Xmpp\MessageStatus.cs" />
@@ -160,7 +160,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Core\Xmpp\XmppConfig.cs" />
-    <Compile Include="Core\Xmpp\Handler\XmppHandler.cs" />
+    <Compile Include="Core\Xmpp\Handler\XmppHandlers.cs" />
     <Compile Include="Core\Xmpp\XmppServer.cs" />
     <Compile Include="Core\Xmpp\XmppServerConnection.cs" />
     <Compile Include="Global.asax.cs">

@@ -89,6 +89,30 @@ namespace FileDownloadAndUpload.Controllers
             FileDownloadAndUpload.Models.User newUser = MessageEntityFictory.ModelsEntities.User.Create();
             return View(newUser);
         }
+        public string generateUser()
+        {
+            for (int i = 1; i < 1000; i++)
+            {
+                User user = _men.User.Create();
+                user.Email = "test@swgis.com";
+                user.Password="123456";
+                _men.User.Add(user);
+            }
+            try
+            {
+                _men.SaveChanges();
+                return "success";
+
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        }
+        public JsonResult getUsers()
+        {
+            return Json(_men.User, JsonRequestBehavior.AllowGet);
+        }
 
     //[HttpPost]
         public String TestPost()

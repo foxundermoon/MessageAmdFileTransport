@@ -11,25 +11,24 @@ using agsXMPP.Xml.Dom;
 
 namespace FileDownloadAndUpload.Core.Xmpp
 {
-    public class XmppServer
+    public partial  class XmppServer
     {
-
+        Models.MessageEntities1 entities = Core.Common.MessageEntityFictory.ModelsEntities;
         // Thread signal.
         private ManualResetEvent allDone = new ManualResetEvent(false);
         private Socket listener;
         private bool m_Listening;
         public MessageHandle MsgHandle { get; private set; }
         static XmppServer instance;
-        public List<XmppSeverConnection> XmppConnectionList { get; private set; }
         public Dictionary<int, XmppSeverConnection> XmppConnectionDic { get; private set; }
-        public List<XmppHandler> XmppHandlers = new List<XmppHandler>();
-        public event Action ConnectionEncrease;//{ get; set; }
-        public event Action ConnectionDecrease;
+        //public event EventHandler<int> ConnectionEncrease;
+        //public event EventHandler ConnectionDecrease;
+        public static Jid ServerJid;
+
         private XmppServer()
         {
-            XmppConnectionList = new List<XmppSeverConnection>();
             XmppConnectionDic = new Dictionary<int, XmppSeverConnection>();
-            MsgHandle = new MessageHandle(XmppConnectionDic);
+            ServerJid = new agsXMPP.Jid("0", agsXMPP.XmppConfig.ServerIP, "server");
         }
         public static XmppServer GetInstance()
         {
@@ -42,37 +41,31 @@ namespace FileDownloadAndUpload.Core.Xmpp
             ThreadStart myThreadDelegate = new ThreadStart(Listen);
             Thread myThread = new Thread(myThreadDelegate);
             myThread.Start();
-
-            ThreadStart watcher = new ThreadStart(watch);
-            new Thread(watcher).Start();
-
         }
 
         //废弃
-        private void StartUpInNewThread()
-        {
-            ThreadStart myThreadDelegate = new ThreadStart(Listen);
-            Thread myThread = new Thread(myThreadDelegate);
-            myThread.Start();
+        //private void StartUpInNewThread()
+        //{
+        //    ThreadStart myThreadDelegate = new ThreadStart(Listen);
+        //    Thread myThread = new Thread(myThreadDelegate);
+        //    myThread.Start();
 
-        }
+        //}
 
-        private void watch()
-        {
-            while (true)
-            {
-                int count = XmppConnectionDic.Count;
-                Thread.Sleep(1000);
-                if (count == XmppConnectionDic.Count)
-                    return;
-                else if (count < XmppConnectionDic.Count)
-                    ConnectionDecrease();
-                else if (count > XmppConnectionDic.Count)
-                    ConnectionEncrease();
-
-            }
-
-        }
+        //private void watch()
+        //{
+        //    while (true)
+        //    {
+        //        int count = XmppConnectionDic.Count;
+        //        Thread.Sleep(1000);
+        //        if (count == XmppConnectionDic.Count)
+        //            return;
+        //        else if (count < XmppConnectionDic.Count)
+        //            ConnectionDecrease();
+        //        else if (count > XmppConnectionDic.Count)
+        //            ConnectionEncrease();
+        //    }
+        //}
         private void Listen()
         {
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 5222);
@@ -110,7 +103,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
 
         }
 
-        public void AcceptCallback(IAsyncResult ar)
+        private void AcceptCallback(IAsyncResult ar)
         {
             // Signal the main thread to continue.
             allDone.Set();
@@ -118,7 +111,11 @@ namespace FileDownloadAndUpload.Core.Xmpp
             Socket newSock = listener.EndAccept(ar);
 
             XmppSeverConnection con = new XmppSeverConnection(newSock, this);
-            XmppConnectionList.Add(con);
+            con.OnNode+= new NodeHandler(OnNode);
+            con.OnIq += new IqHandler(OnIQ);
+            con.OnMessage += new MessageHandler(OnMessage);
+            con.OnPresence += new PresenceHandler(OnPresence);
+            /// you can  register other handler  here
             //listener.BeginReceive(buffer, 0, BUFFERSIZE, 0, new AsyncCallback(ReadCallback), null);
         }
 
@@ -164,9 +161,9 @@ namespace FileDownloadAndUpload.Core.Xmpp
 
 
                 //<iq xmlns="jabber:client" from="0@10.80.5.222/Server">
-                    //<notification xmlns="androidpn:iq:notification">
-                        //<id>3fada5a4-3f2e-4652-bf8c-01bb4df0debb</id>
-                    //</notification>
+                //<notification xmlns="androidpn:iq:notification">
+                //<id>3fada5a4-3f2e-4652-bf8c-01bb4df0debb</id>
+                //</notification>
                 //</iq>
 
             }

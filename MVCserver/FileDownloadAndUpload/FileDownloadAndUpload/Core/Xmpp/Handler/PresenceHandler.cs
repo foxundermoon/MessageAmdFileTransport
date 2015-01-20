@@ -6,79 +6,96 @@ using FileDownloadAndUpload;
 using System.Diagnostics;
 using agsXMPP.protocol.client;
 
-namespace FileDownloadAndUpload.Core.Xmpp.Handler
+namespace FileDownloadAndUpload.Core.Xmpp
 {
-    public class PresenceHandler : XmppHandler
+    public partial class XmppServer
     {
-        XmppServer xmppserver;
-        public PresenceHandler()
-            : base(typeof(agsXMPP.protocol.client.Presence))
+        public void OnPresence(agsXMPP.XmppSeverConnection contextConnection, Presence presence)
         {
-            xmppserver = XmppServer.GetInstance();
+            if (contextConnection.IsAuthentic)
+            {
+                processPresence(contextConnection, presence);
+            }
+            else
+            {
+                contextConnection.Stop();
+            }
         }
-
         /// <summary>
         ///  route presences here and handle all subscription stuff
         /// </summary>
         /// <param name="node"></param>
-        public override void Process(agsXMPP.XmppSeverConnection contextConnection, agsXMPP.Xml.Dom.Node node)
+        private void processPresence(agsXMPP.XmppSeverConnection contextConnection, Presence presence)
         {
-            if (node.GetType() == HandlerType)
+
+            //Trace.Write(node.ToString(), HandlerType.FullName);
+            // route presences here and handle all subscription stuff
+            ///登录
+            if (presence.Type == PresenceType.subscribe)
             {
-                Trace.Write(node.ToString(), HandlerType.FullName);
-                // route presences here and handle all subscription stuff
-                Presence presence = node as Presence;
-
-                ///登录
-                if (presence.Type == PresenceType.subscribe)
+                if (presence.Status == "online")
                 {
-                    if (presence.Status == "online")
+                    try
                     {
+                        //string pswd = presence.GetTag("passwd");
                         int uid = Convert.ToInt32(presence.From.User);
-                        if (xmppserver.XmppConnectionDic.ContainsKey(uid))
-                        {
-                            xmppserver.XmppConnectionDic.Remove(uid);
-                        }
-                        xmppserver.XmppConnectionDic.Add(uid, contextConnection);
-                        Presence reply = new Presence();
-                        reply.From = ServerJid;
-                        reply.To = presence.From;
-                        reply.Status = "onlined";
-                        reply.Type = PresenceType.subscribed;
-                        reply.Id = presence.Id;
-                        contextConnection.Send(reply);
-                        xmppserver.Broadcast(presence);
+                            //if (XmppConnectionDic.ContainsKey(uid))
+                            //{
+                            //    XmppConnectionDic.Remove(uid);
+                            //}
+                            //XmppConnectionDic.Add(uid, contextConnection);
+                            contextConnection.IsAuthentic = true;
+                            Presence reply = new Presence();
+                            reply.From = ServerJid;
+                            reply.To = presence.From;
+                            reply.Status = "onlined";
+                            reply.Type = PresenceType.subscribed;
+                            reply.Id = presence.Id;
+                            reply.Value = "ok";
+                            contextConnection.Send(reply);
+                            Broadcast(presence);
+                        //}
+                        //else
+                        //{
+                        //    presence.Error = new Error(ErrorCondition.NotAuthorized);
+                        //    presence.Value = "error password";
+                        //    presence.SwitchDirection();
+                        //    contextConnection.Send(presence);
+                        //    contextConnection.Stop();
+                        //}
                     }
-                 
-
-                }
-                    ///注销用户
-                else if (presence.Type == PresenceType.unsubscribe)
-                {
-                    int uid = Convert.ToInt32(presence.From.User);
-                    if (xmppserver.XmppConnectionDic.ContainsKey(uid))
+                    catch (Exception e)
                     {
-                        xmppserver.XmppConnectionDic.Remove(uid);
-                    }
-                    xmppserver.Broadcast(presence);
-                    presence.Type =PresenceType.unsubscribed;
-                    contextConnection.Send(presence);
-
-
-                }
-                else if(presence.Type == PresenceType.available)
-                {
-                    if (presence.Status == "ping")
-                    {
-                        presence.Type = PresenceType.available;
-                        presence.Status = "pinged";
+                        presence.Error = new Error(ErrorCondition.BadRequest);
+                        presence.Value = e.Message + e.ToString();
+                        presence.SwitchDirection();
                         contextConnection.Send(presence);
+                        contextConnection.Stop();
                     }
                 }
-
-
+            }
+            ///注销用户
+            else if (presence.Type == PresenceType.unsubscribe)
+            {
+                int uid = Convert.ToInt32(presence.From.User);
+                if (XmppConnectionDic.ContainsKey(uid))
+                {
+                    XmppConnectionDic.Remove(uid);
+                }
+                Broadcast(presence);
+                presence.Type = PresenceType.unsubscribed;
+                contextConnection.Send(presence);
+            }
+            else if (presence.Type == PresenceType.available)
+            {
+                if (presence.Status == "ping")
+                {
+                    presence.Type = PresenceType.available;
+                    presence.Status = "pinged";
+                    presence.SwitchDirection();
+                    contextConnection.Send(presence);
+                }
             }
         }
     }
-
 }

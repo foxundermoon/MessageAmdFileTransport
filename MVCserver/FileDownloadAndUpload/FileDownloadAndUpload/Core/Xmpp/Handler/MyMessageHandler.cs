@@ -5,26 +5,20 @@ using System.Web;
 using agsXMPP.protocol.client;
 using System.Diagnostics;
 
-namespace FileDownloadAndUpload.Core.Xmpp.Handler
+namespace FileDownloadAndUpload.Core.Xmpp
 {
-    public class MyMessageHandler:XmppHandler
+    public partial class Xmppserver
     {
-        public MyMessageHandler()
-            :base(typeof(agsXMPP.protocol.client.Message))
+        private void processMyMessage(agsXMPP.XmppSeverConnection contextConnection, Message msg)
         {
-
-        }
-        public override void Process(agsXMPP.XmppSeverConnection contextConnection, agsXMPP.Xml.Dom.Node node)
-        {
-            if(node.GetType()==HandlerType)
             {
-                Message msg = node as Message;
-                if(msg.To==null)
+                if (msg.To == null)
                 {
-
+                    //to do sth
                 }
-                else if(msg.To.User=="0")
+                else if (msg.To.User == "0")
                 {
+                    //todo sth
 
                 }
             }

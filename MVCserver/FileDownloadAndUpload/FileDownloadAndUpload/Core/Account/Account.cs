@@ -24,7 +24,11 @@ namespace FileDownloadAndUpload.Core.Account
             User u = entis.User.Find(int.Parse(uid));
             if (u == null)
                 return false;
-            return u.Password == psw;
+            if (u.Password == null)
+                return false;
+            if (psw == null)
+                return false;
+            return string.Equals(u.Password.Trim(),psw.Trim(),StringComparison.OrdinalIgnoreCase);
         }
         public User GetUserInfo(string uid)
         {

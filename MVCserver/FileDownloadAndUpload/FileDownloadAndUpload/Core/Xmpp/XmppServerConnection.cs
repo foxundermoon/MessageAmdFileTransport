@@ -9,11 +9,12 @@ using agsXMPP.protocol;
 using agsXMPP.protocol.iq;
 using agsXMPP.protocol.iq.auth;
 using agsXMPP.protocol.iq.roster;
-using agsXMPP.protocol.client;
 
 using agsXMPP.Xml;
 using agsXMPP.Xml.Dom;
 using FileDownloadAndUpload.Core.Account;
+using FileDownloadAndUpload.Core.Xmpp;
+using agsXMPP.protocol.client;
 
 namespace agsXMPP
 {
@@ -22,6 +23,10 @@ namespace agsXMPP
     /// </summary>
     public class XmppSeverConnection
     {
+        public event FileDownloadAndUpload.Core.Xmpp.IqHandler OnIq;
+        public event FileDownloadAndUpload.Core.Xmpp.MessageHandler OnMessage;
+        public event FileDownloadAndUpload.Core.Xmpp.PresenceHandler OnPresence;
+        public event NodeHandler OnNode;
         #region << Constructors >>
         public XmppSeverConnection()
         {
@@ -50,7 +55,7 @@ namespace agsXMPP
         private const int BUFFERSIZE = 1024;
         private byte[] buffer = new byte[BUFFERSIZE];
         private FileDownloadAndUpload.Core.Xmpp.XmppServer xmppServer;
-
+        public bool IsAuthentic { get; set; }
 
         public void ReadCallback(IAsyncResult ar)
          {
@@ -89,7 +94,6 @@ namespace agsXMPP
             // Begin sending the data to the remote device.
             m_Sock.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), null);
         }
-
         private void SendCallback(IAsyncResult ar)
         {
             try
@@ -138,7 +142,6 @@ namespace agsXMPP
         {
             SendOpenStream();
         }
-
         private void streamParser_OnStreamEnd(object sender, Node e)
         {
 
@@ -146,17 +149,15 @@ namespace agsXMPP
 
         private void streamParser_OnStreamElement(object sender, Node node)
         {
-            foreach(var handler in xmppServer.XmppHandlers)
-            {
-                handler.Process(this,node);
-            }
-         
+            if (OnNode != null)
+                OnNode(this, node);
+            if (OnIq != null && node.GetType() == typeof(IQ))
+                OnIq(this, node as IQ);
+            if (OnMessage != null && node.GetType() == typeof(Message))
+                OnMessage(this, node as Message);
+            if (OnPresence != null && node.GetType() == typeof(Presence))
+                OnPresence(this, node as Presence);
         }
-
-   
-
-      
-
         private void SendOpenStream()
         {
 
