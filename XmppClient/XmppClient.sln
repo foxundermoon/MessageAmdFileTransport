@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "agsXMPP2010", "..\MVCserver
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "performance", "performance\performance.csproj", "{AB62C5F4-129E-483A-A194-5C3C67E859AD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLib", "..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj", "{7A04DA80-47C9-419C-800C-980B45E955CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLibTests", "..\..\Lib\FoxundermoonLib\FoxundermoonLibTests\FoxundermoonLibTests.csproj", "{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{AB62C5F4-129E-483A-A194-5C3C67E859AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB62C5F4-129E-483A-A194-5C3C67E859AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB62C5F4-129E-483A-A194-5C3C67E859AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A04DA80-47C9-419C-800C-980B45E955CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A04DA80-47C9-419C-800C-980B45E955CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A04DA80-47C9-419C-800C-980B45E955CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A04DA80-47C9-419C-800C-980B45E955CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

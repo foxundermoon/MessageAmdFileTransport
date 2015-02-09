@@ -138,7 +138,7 @@ namespace FileDownloadAndUpload.Core.Xmpp.UI
             }
             else
             {
-                xmppserver.Broadcast(msg, Broadcast.Type.Message);
+                xmppserver.Broadcast(msg, Xmpp.Type.Message);
                 textBox1.Text = string.Empty;
 
             }
@@ -154,7 +154,7 @@ namespace FileDownloadAndUpload.Core.Xmpp.UI
             }
             else
             {
-                xmppserver.Broadcast(msg, Broadcast.Type.Notification);
+                xmppserver.Broadcast(msg, Xmpp.Type.Notification);
                 textBox1.Text = string.Empty;
 
             }

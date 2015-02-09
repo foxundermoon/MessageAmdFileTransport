@@ -7,7 +7,7 @@
       <Diagram DiagramId="c972b06b55744983bee602dc9b468f1e" Name="Diagram1">
         <EntityTypeShape EntityType="FileManagerModel.File" Width="1.5" PointX="0.75" PointY="1" IsExpanded="true" />
         <EntityTypeShape EntityType="FileManagerModel.FileOtherChar" Width="1.5" PointX="0.75" PointY="4.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="FileManagerModel.Message" Width="1.5" PointX="2.75" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="FileManagerModel.Message" Width="1.5" PointX="2.75" PointY="4.875" IsExpanded="true" />
         <EntityTypeShape EntityType="FileManagerModel.User" Width="1.5" PointX="3" PointY="1.125" IsExpanded="true" />
         <AssociationConnector Association="FileManagerModel.UserFileRelationShip" ManuallyRouted="false" />
       </Diagram>

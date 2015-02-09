@@ -105,6 +105,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj">
+      <Project>{7a04da80-47c9-419c-800c-980b45e955cd}</Project>
+      <Name>FoxundermoonLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\MVCserver\agsxmpp\agsXMPP2010.csproj">
       <Project>{91ea0d0b-d3ba-497f-afeb-2cad59deba0e}</Project>
       <Name>agsXMPP2010</Name>

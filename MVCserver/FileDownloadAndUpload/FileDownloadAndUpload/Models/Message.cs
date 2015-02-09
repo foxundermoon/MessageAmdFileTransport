@@ -20,7 +20,7 @@ namespace FileDownloadAndUpload.Models
         public Nullable<int> To { get; set; }
         public byte[] Time { get; set; }
         public Nullable<int> Status { get; set; }
-        public string Resource { get; set; }
         public string Mid { get; set; }
+        public string Resource { get; set; }
     }
 }

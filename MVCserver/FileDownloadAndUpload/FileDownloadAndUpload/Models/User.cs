@@ -25,7 +25,7 @@ namespace FileDownloadAndUpload.Models
         public Nullable<System.DateTime> LastLogin { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        public int Status { get; set; }
+        public Nullable<int> status { get; set; }
     
         public virtual ICollection<File> File { get; set; }
     }

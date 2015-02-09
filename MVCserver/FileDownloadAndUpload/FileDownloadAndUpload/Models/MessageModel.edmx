@@ -38,6 +38,8 @@
           <Property Name="To" Type="int" />
           <Property Name="Time" Type="timestamp" StoreGeneratedPattern="Computed" />
           <Property Name="Status" Type="int" />
+          <Property Name="mid" Type="text" />
+          <Property Name="resource" Type="nchar" MaxLength="15" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -49,6 +51,7 @@
           <Property Name="LastLogin" Type="datetime" />
           <Property Name="Email" Type="nchar" MaxLength="15" />
           <Property Name="Password" Type="nchar" MaxLength="20" />
+          <Property Name="status" Type="int" />
         </EntityType>
         <EntityType Name="UserFileRelationShip">
           <Key>
@@ -135,6 +138,8 @@
           <Property Name="To" Type="Int32" />
           <Property Name="Time" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
           <Property Name="Status" Type="Int32" />
+          <Property Name="Mid" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="Resource" Type="String" MaxLength="15" FixedLength="true" Unicode="true" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -147,6 +152,7 @@
           <Property Name="Email" Type="String" MaxLength="15" FixedLength="true" Unicode="true" />
           <NavigationProperty Name="File" Relationship="Self.UserFileRelationShip" FromRole="User" ToRole="File" />
           <Property Name="Password" Type="String" MaxLength="20" FixedLength="true" Unicode="true" />
+          <Property Name="status" Type="Int32" />
         </EntityType>
         <Association Name="UserFileRelationShip">
           <End Role="File" Type="Self.File" Multiplicity="*" />
@@ -196,6 +202,8 @@
           <EntitySetMapping Name="Message">
             <EntityTypeMapping TypeName="FileManagerModel.Message">
               <MappingFragment StoreEntitySet="Message">
+                <ScalarProperty Name="Resource" ColumnName="resource" />
+                <ScalarProperty Name="Mid" ColumnName="mid" />
                 <ScalarProperty Name="Id" ColumnName="Id" />
                 <ScalarProperty Name="Content" ColumnName="Content" />
                 <ScalarProperty Name="From" ColumnName="From" />
@@ -208,6 +216,7 @@
           <EntitySetMapping Name="User">
             <EntityTypeMapping TypeName="FileManagerModel.User">
               <MappingFragment StoreEntitySet="User">
+                <ScalarProperty Name="status" ColumnName="status" />
                 <ScalarProperty Name="Password" ColumnName="Password" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
                 <ScalarProperty Name="Name" ColumnName="Name" />

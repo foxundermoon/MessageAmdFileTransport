@@ -15,6 +15,9 @@ namespace FileDownloadAndUpload
 
     public class MvcApplication : System.Web.HttpApplication
     {
+        public void StartUp( ) {
+            Application_Start();
+        }
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();

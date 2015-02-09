@@ -127,9 +127,9 @@ namespace FileDownloadAndUpload.Core.Xmpp
             //allDone.Reset();
         }
 
-        public void Broadcast(string strMsg, Broadcast.Type type)
+        public void Broadcast(string strMsg, Xmpp.Type type)
         {
-            if (type == Xmpp.Broadcast.Type.Message)
+            if (type == Xmpp.Type.Message)
             {
                 Message msg = new Message();
                 msg.From = new Jid("0@10.80.5.222/Server");
@@ -141,7 +141,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
                 }
 
             }
-            if (type == Xmpp.Broadcast.Type.Notification)
+            if (type == Xmpp.Type.Notification)
             {
 
                 IQ notificationIQ = new IQ();
