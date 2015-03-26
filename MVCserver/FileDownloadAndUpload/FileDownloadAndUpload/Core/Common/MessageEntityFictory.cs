@@ -8,14 +8,14 @@ namespace FileDownloadAndUpload.Core.Common
 {
     public class MessageEntityFictory
     {
-        private static MessageEntities1 instance;
-        public static MessageEntities1 ModelsEntities
+        private static Entities instance;
+        public static Entities ModelsEntities
         {
             get
             {
                 if(instance==null)
                 {
-                    instance = new MessageEntities1();
+                    instance = new Entities();
                 }
                 return instance;
             }

@@ -7,11 +7,11 @@ namespace FileDownloadAndUpload.Core.Account
 {
     public class AccountManage
     {
-        MessageEntities1 entis;
+        Entities entis;
         static AccountManage instance;
         private  AccountManage()
         {
-            entis = new MessageEntities1();
+            entis = new Entities();
         }
         public static AccountManage GetInstance()
         {

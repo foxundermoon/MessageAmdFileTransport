@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="FileManagerModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="File">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="varchar" MaxLength="20" />
+          <Property Name="Size" Type="int" />
+          <Property Name="UploadSize" Type="int" />
+          <Property Name="MD5" Type="char" MaxLength="32" />
+          <Property Name="UploadTime" Type="timestamp" StoreGeneratedPattern="Computed" />
+          <Property Name="UID" Type="int" />
+        </EntityType>
+        <EntityType Name="FileOtherChar">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="varchar" MaxLength="20" />
+          <Property Name="Size" Type="int" />
+          <Property Name="UploadSize" Type="int" />
+          <Property Name="MD5" Type="char" MaxLength="32" />
+          <Property Name="UploadTime" Type="timestamp" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="Message">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Content" Type="text" />
+          <Property Name="From" Type="int" />
+          <Property Name="To" Type="int" />
+          <Property Name="Time" Type="timestamp" StoreGeneratedPattern="Computed" />
+          <Property Name="Status" Type="int" />
+          <Property Name="mid" Type="text" />
+          <Property Name="resource" Type="nchar" MaxLength="15" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="varchar" MaxLength="20" />
+          <Property Name="RegTime" Type="timestamp" StoreGeneratedPattern="Computed" />
+          <Property Name="LastLogin" Type="datetime" />
+          <Property Name="Email" Type="nchar" MaxLength="15" />
+          <Property Name="Password" Type="nchar" MaxLength="20" />
+          <Property Name="status" Type="int" />
+        </EntityType>
+        <EntityType Name="UserFileRelationShip">
+          <Key>
+            <PropertyRef Name="ID" />
+            <PropertyRef Name="Fil_ID" />
+          </Key>
+          <Property Name="ID" Type="int" Nullable="false" />
+          <Property Name="Fil_ID" Type="int" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_USERFILE_USERFILER_FILE">
+          <End Role="File" Type="Self.File" Multiplicity="1" />
+          <End Role="UserFileRelationShip" Type="Self.UserFileRelationShip" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="File">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="UserFileRelationShip">
+              <PropertyRef Name="Fil_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_USERFILE_USERFILER_USER">
+          <End Role="User" Type="Self.User" Multiplicity="1" />
+          <End Role="UserFileRelationShip" Type="Self.UserFileRelationShip" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="User">
+              <PropertyRef Name="ID" />
+            </Principal>
+            <Dependent Role="UserFileRelationShip">
+              <PropertyRef Name="ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="FileManagerModelStoreContainer">
+          <EntitySet Name="File" EntityType="Self.File" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="FileOtherChar" EntityType="Self.FileOtherChar" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Message" EntityType="Self.Message" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="UserFileRelationShip" EntityType="Self.UserFileRelationShip" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_USERFILE_USERFILER_FILE" Association="Self.FK_USERFILE_USERFILER_FILE">
+            <End Role="File" EntitySet="File" />
+            <End Role="UserFileRelationShip" EntitySet="UserFileRelationShip" />
+          </AssociationSet>
+          <AssociationSet Name="FK_USERFILE_USERFILER_USER" Association="Self.FK_USERFILE_USERFILER_USER">
+            <End Role="User" EntitySet="User" />
+            <End Role="UserFileRelationShip" EntitySet="UserFileRelationShip" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="FileManagerModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="File">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="Size" Type="Int32" />
+          <Property Name="UploadSize" Type="Int32" />
+          <Property Name="MD5" Type="String" MaxLength="32" FixedLength="true" Unicode="false" />
+          <Property Name="UploadTime" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
+          <Property Name="UID" Type="Int32" />
+          <NavigationProperty Name="User" Relationship="Self.UserFileRelationShip" FromRole="File" ToRole="User" />
+        </EntityType>
+        <EntityType Name="FileOtherChar">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="Size" Type="Int32" />
+          <Property Name="UploadSize" Type="Int32" />
+          <Property Name="MD5" Type="String" MaxLength="32" FixedLength="true" Unicode="false" />
+          <Property Name="UploadTime" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="Message">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Content" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="From" Type="Int32" />
+          <Property Name="To" Type="Int32" />
+          <Property Name="Time" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
+          <Property Name="Status" Type="Int32" />
+          <Property Name="mid" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="resource" Type="String" MaxLength="15" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="User">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="RegTime" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
+          <Property Name="LastLogin" Type="DateTime" Precision="3" />
+          <Property Name="Email" Type="String" MaxLength="15" FixedLength="true" Unicode="true" />
+          <Property Name="Password" Type="String" MaxLength="20" FixedLength="true" Unicode="true" />
+          <Property Name="status" Type="Int32" />
+          <NavigationProperty Name="File" Relationship="Self.UserFileRelationShip" FromRole="User" ToRole="File" />
+        </EntityType>
+        <Association Name="UserFileRelationShip">
+          <End Role="File" Type="Self.File" Multiplicity="*" />
+          <End Role="User" Type="Self.User" Multiplicity="*" />
+        </Association>
+        <EntityContainer Name="Entities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="File" EntityType="Self.File" />
+          <EntitySet Name="FileOtherChar" EntityType="Self.FileOtherChar" />
+          <EntitySet Name="Message" EntityType="Self.Message" />
+          <EntitySet Name="User" EntityType="Self.User" />
+          <AssociationSet Name="UserFileRelationShip" Association="Self.UserFileRelationShip">
+            <End Role="File" EntitySet="File" />
+            <End Role="User" EntitySet="User" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="FileManagerModelStoreContainer" CdmEntityContainer="Entities">
+          <EntitySetMapping Name="File">
+            <EntityTypeMapping TypeName="FileManagerModel.File">
+              <MappingFragment StoreEntitySet="File">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Size" ColumnName="Size" />
+                <ScalarProperty Name="UploadSize" ColumnName="UploadSize" />
+                <ScalarProperty Name="MD5" ColumnName="MD5" />
+                <ScalarProperty Name="UploadTime" ColumnName="UploadTime" />
+                <ScalarProperty Name="UID" ColumnName="UID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="FileOtherChar">
+            <EntityTypeMapping TypeName="FileManagerModel.FileOtherChar">
+              <MappingFragment StoreEntitySet="FileOtherChar">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Size" ColumnName="Size" />
+                <ScalarProperty Name="UploadSize" ColumnName="UploadSize" />
+                <ScalarProperty Name="MD5" ColumnName="MD5" />
+                <ScalarProperty Name="UploadTime" ColumnName="UploadTime" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Message">
+            <EntityTypeMapping TypeName="FileManagerModel.Message">
+              <MappingFragment StoreEntitySet="Message">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="Content" ColumnName="Content" />
+                <ScalarProperty Name="From" ColumnName="From" />
+                <ScalarProperty Name="To" ColumnName="To" />
+                <ScalarProperty Name="Time" ColumnName="Time" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="mid" ColumnName="mid" />
+                <ScalarProperty Name="resource" ColumnName="resource" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="User">
+            <EntityTypeMapping TypeName="FileManagerModel.User">
+              <MappingFragment StoreEntitySet="User">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="RegTime" ColumnName="RegTime" />
+                <ScalarProperty Name="LastLogin" ColumnName="LastLogin" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="Password" ColumnName="Password" />
+                <ScalarProperty Name="status" ColumnName="status" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="UserFileRelationShip" TypeName="FileManagerModel.UserFileRelationShip" StoreEntitySet="UserFileRelationShip">
+            <EndProperty Name="File">
+              <ScalarProperty Name="ID" ColumnName="Fil_ID" />
+            </EndProperty>
+            <EndProperty Name="User">
+              <ScalarProperty Name="ID" ColumnName="ID" />
+            </EndProperty>
+          </AssociationSetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="无" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

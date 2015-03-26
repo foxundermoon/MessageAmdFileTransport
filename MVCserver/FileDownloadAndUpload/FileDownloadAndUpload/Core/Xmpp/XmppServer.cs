@@ -13,7 +13,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
 {
     public partial  class XmppServer
     {
-        Models.MessageEntities1 entities = Core.Common.MessageEntityFictory.ModelsEntities;
+        Models.Entities entities = Core.Common.MessageEntityFictory.ModelsEntities;
         // Thread signal.
         private ManualResetEvent allDone = new ManualResetEvent(false);
         private Socket listener;

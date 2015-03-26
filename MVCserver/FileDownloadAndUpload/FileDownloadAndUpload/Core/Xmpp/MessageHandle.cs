@@ -10,12 +10,12 @@ namespace FileDownloadAndUpload.Core.Xmpp
 {
     public class MessageHandle
     {
-        FileDownloadAndUpload.Models.MessageEntities1 mentiti;
+        FileDownloadAndUpload.Models.Entities mentiti;
         Dictionary<int, XmppSeverConnection> _conDic;
         public MessageHandle(Dictionary<int, XmppSeverConnection> conDic)
         {
             _conDic = conDic;
-            mentiti = new FileDownloadAndUpload.Models.MessageEntities1();
+            mentiti = new FileDownloadAndUpload.Models.Entities();
         }
 
         public void Handle(XmppSeverConnection con, Message msg)
