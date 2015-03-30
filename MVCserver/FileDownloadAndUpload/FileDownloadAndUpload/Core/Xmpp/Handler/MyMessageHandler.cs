@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace FileDownloadAndUpload.Core.Xmpp
 {
-    public partial class Xmppserver
+    public partial class XmppServer
     {
         private void processMyMessage(agsXMPP.XmppSeverConnection contextConnection, Message msg)
         {

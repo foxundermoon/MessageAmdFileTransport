@@ -8,39 +8,81 @@ using System.Net;
 using agsXMPP;
 using agsXMPP.protocol.client;
 using agsXMPP.Xml.Dom;
+using MongoDB.Driver;
+using System.Configuration;
+using FileDownloadAndUpload.Core.Config;
 
-namespace FileDownloadAndUpload.Core.Xmpp
-{
-    public partial  class XmppServer
-    {
+namespace FileDownloadAndUpload.Core.Xmpp {
+    public partial class XmppServer {
+        static object _lock = new object();
         Models.Entities entities = Core.Common.MessageEntityFictory.ModelsEntities;
         // Thread signal.
         private ManualResetEvent allDone = new ManualResetEvent(false);
         private Socket listener;
         private bool m_Listening;
-        public MessageHandle MsgHandle { get; private set; }
         static XmppServer instance;
         public Dictionary<int, XmppSeverConnection> XmppConnectionDic { get; private set; }
         //public event EventHandler<int> ConnectionEncrease;
         //public event EventHandler ConnectionDecrease;
         public static Jid ServerJid;
+        public MongoDB.Driver.IMongoClient Mongo;
+        public IMongoDatabase MongoDatabase;
+        public Config.ServerConfig Config;
+        public static XmppServer Instance {
+            get {
+                lock(_lock) {
+                    if(instance==null) {
+                        instance = new XmppServer();
+                    }
+                    return instance;
+                }
+            }
+        }
 
-        private XmppServer()
-        {
+        private XmppServer( ) {
+            initConfig();
             XmppConnectionDic = new Dictionary<int, XmppSeverConnection>();
-            ServerJid = new agsXMPP.Jid("0", agsXMPP.XmppConfig.ServerIP, "server");
+            ServerJid = new agsXMPP.Jid(Config.ServerUid.ToString(), Config.ServerIp, Config.ServerResource);
         }
-        public static XmppServer GetInstance()
-        {
-            if (instance == null)
-                instance = new XmppServer();
-            return instance;
+
+        private void initConfig( ) {
+            Config = new ServerConfig();
+            Config.FileCollection = ConfigurationManager.AppSettings["FileCollection"].ToString();
+            Config.FileServer = ConfigurationManager.AppSettings["FileServer"].ToString();
+            Config.FileServerPort =int.Parse(ConfigurationManager.AppSettings["FileServerPort"].ToString());
+            Config.LogLevel=int.Parse(ConfigurationManager.AppSettings["FileServerPort"].ToString());
+            Config.MessageCollection=  ConfigurationManager.AppSettings["MessageCollection"].ToString();
+            Config.MongoDatabase=  ConfigurationManager.AppSettings["MongoDatabase"].ToString();
+            Config.MongoServer=  ConfigurationManager.AppSettings["MongoServer"].ToString();
+            Config.UserCollection= ConfigurationManager.AppSettings["UserCollection"].ToString();
+            Config.XmppPort =int.Parse(ConfigurationManager.AppSettings["XmppPort"].ToString());
+            Config.ServerResource = ConfigurationManager.AppSettings["ServerResource"].ToString();
+            Config.ServerIp=  ConfigurationManager.AppSettings["ServerIp"].ToString();
+           Config.ServerUid=int.Parse(ConfigurationManager.AppSettings["ServerUid"].ToString());
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+            //ConfigurationManager.AppSettings["ServerResource"].ToString();
+
         }
-        public void StartUp()
-        {
-            ThreadStart myThreadDelegate = new ThreadStart(Listen);
-            Thread myThread = new Thread(myThreadDelegate);
-            myThread.Start();
+        public static XmppServer GetInstance( ) {
+            return Instance;
+        }
+        public void StartUp( ) {
+            try {
+
+                Mongo = new MongoClient(ConfigurationManager.AppSettings["MongoServer"].ToString());
+                MongoDatabase = Mongo.GetDatabase(ConfigurationManager.AppSettings["MongoDatabase"].ToString());
+                ThreadStart myThreadDelegate = new ThreadStart(Listen);
+                Thread myThread = new Thread(myThreadDelegate);
+                Console.WriteLine("开始监听 xmpp服务");
+                myThread.Start();
+            } catch(Exception ex) {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         //废弃
@@ -66,49 +108,56 @@ namespace FileDownloadAndUpload.Core.Xmpp
         //            ConnectionEncrease();
         //    }
         //}
-        private void Listen()
-        {
-            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 5222);
+        private void Listen( ) {
+            try {
 
-            // Create a TCP/IP socket.
-            listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                int port =Config.XmppPort;
+                if(port<1024)
+                    port = 5222;
+                IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, port);
+
+                // Create a TCP/IP socket.
+                listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 
-            // Bind the socket to the local endpoint and listen for incoming connections.
-            try
-            {
-                listener.Bind(localEndPoint);
-                listener.Listen(10);
+                // Bind the socket to the local endpoint and listen for incoming connections.
+                try {
+                    listener.Bind(localEndPoint);
+                    int loglevel = Config.LogLevel;
+                    if(loglevel<0 || loglevel>10)
+                        loglevel=10;
+                    listener.Listen(loglevel);
 
-                m_Listening = true;
+                    m_Listening = true;
 
-                while (m_Listening)
-                {
-                    // Set the event to nonsignaled state.
-                    allDone.Reset();
+                    while(m_Listening) {
+                        // Set the event to nonsignaled state.
+                        allDone.Reset();
 
-                    // Start an asynchronous socket to listen for connections.
-                    //Console.WriteLine("Waiting for a connection...");
-                    listener.BeginAccept(new AsyncCallback(AcceptCallback), null);
+                        // Start an asynchronous socket to listen for connections.
+                        //Console.WriteLine("Waiting for a connection...");
+                        listener.BeginAccept(new AsyncCallback(AcceptCallback), null);
 
-                    // Wait until a connection is made before continuing.
-                    allDone.WaitOne();
+                        // Wait until a connection is made before continuing.
+                        allDone.WaitOne();
+                    }
+
+                } catch(Exception ex) {
+                    Console.WriteLine(ex.ToString());
                 }
 
+            } catch(Exception e) {
+                Console.WriteLine(e.ToString());
             }
-            catch (Exception ex)
-            {
-                //Console.WriteLine(ex.ToString());
-            }
-
         }
 
-        private void AcceptCallback(IAsyncResult ar)
-        {
+        private void AcceptCallback( IAsyncResult ar ) {
             // Signal the main thread to continue.
             allDone.Set();
             // Get the socket that handles the client request.
             Socket newSock = listener.EndAccept(ar);
+
+            Console.WriteLine("从 "+newSock.RemoteEndPoint.ToString() +"建立了一条tcp连接");
 
             XmppSeverConnection con = new XmppSeverConnection(newSock, this);
             con.OnNode+= new NodeHandler(OnNode);
@@ -120,29 +169,24 @@ namespace FileDownloadAndUpload.Core.Xmpp
         }
 
 
-        private void stop()
-        {
+        private void stop( ) {
             m_Listening = false;
             allDone.Set();
             //allDone.Reset();
         }
 
-        public void Broadcast(string strMsg, Xmpp.Type type)
-        {
-            if (type == Xmpp.Type.Message)
-            {
+        public void Broadcast( string strMsg, Xmpp.Type type ) {
+            if(type == Xmpp.Type.Message) {
                 Message msg = new Message();
                 msg.From = new Jid("0@10.80.5.222/Server");
-                foreach (var con in XmppConnectionDic)
-                {
+                foreach(var con in XmppConnectionDic) {
                     Jid to = new Jid(con.Key + "@10.80.5.222");
                     msg.To = to;
                     con.Value.Send(msg);
                 }
 
             }
-            if (type == Xmpp.Type.Notification)
-            {
+            if(type == Xmpp.Type.Notification) {
 
                 IQ notificationIQ = new IQ();
                 Element notify = new Element();
@@ -152,8 +196,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
                 notificationIQ.AddChild(notify);
                 notificationIQ.From = new Jid("0@10.80.5.222/Server");
 
-                foreach (var con in XmppConnectionDic)
-                {
+                foreach(var con in XmppConnectionDic) {
                     Jid to = new Jid(con.Key + "@10.80.5.222");
                     notificationIQ.To = to;
                     con.Value.Send(notificationIQ);
@@ -172,13 +215,11 @@ namespace FileDownloadAndUpload.Core.Xmpp
         /// 广播
         /// </summary>
         /// <param name="strMsg">广播的消息</param>
-        public void Broadcast(string strMsg)
-        {
+        public void Broadcast( string strMsg ) {
             Message msg = new Message();
             msg.From = new Jid("0@10.80.5.222/Server");
             msg.Body = strMsg;
-            foreach (var con in XmppConnectionDic)
-            {
+            foreach(var con in XmppConnectionDic) {
                 Jid to = new Jid(con.Key + "@10.80.5.222");
                 msg.To = to;
                 con.Value.Send(msg);
@@ -189,13 +230,10 @@ namespace FileDownloadAndUpload.Core.Xmpp
         /// </summary>
         /// <param name="id">客户端  或者用户id</param>
         /// <param name="strMsg">发送的数据</param>
-        public void Unicast(int id, string strMsg)
-        {
-            if (XmppConnectionDic.ContainsKey(id))
-            {
+        public void Unicast( int id, string strMsg ) {
+            if(XmppConnectionDic.ContainsKey(id)) {
                 XmppSeverConnection value;
-                if (XmppConnectionDic.TryGetValue(id, out value))
-                {
+                if(XmppConnectionDic.TryGetValue(id, out value)) {
                     Message msg = new Message();
                     msg.To = new Jid(id + "@10.80.5.222");
                     msg.Body = strMsg;
@@ -205,14 +243,13 @@ namespace FileDownloadAndUpload.Core.Xmpp
             }
         }
 
-        internal void Broadcast(agsXMPP.protocol.Base.Stanza reply)
-        {
-            foreach (var con in XmppConnectionDic)
-            {
+        internal void Broadcast( agsXMPP.protocol.Base.Stanza reply ) {
+            foreach(var con in XmppConnectionDic) {
                 Jid to = new Jid(con.Key + "@10.80.5.222");
                 reply.To = to;
                 con.Value.Send(reply);
             }
         }
+
     }
 }

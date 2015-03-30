@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using agsXMPP.protocol.client;
 using agsXMPP.protocol;
 using FileDownloadAndUpload;
@@ -10,9 +9,13 @@ using System.Diagnostics;
 using FileDownloadAndUpload.Core.Xmpp;
 using agsXMPP;
 using FileDownloadAndUpload.Core.Utils;
+using System.Data.Entity.Validation;
+using MongoDB.Driver;
+using MongoDB.Bson;
 namespace FileDownloadAndUpload.Core.Xmpp {
     public partial class XmppServer {
         public void OnMessage( XmppSeverConnection contextConnection, Message message ) {
+            Console.WriteLine("从 "+message.From.User + "接受到消息 ,id:"+message.Id +" , length:"+ message.Body.Length);
             if(contextConnection.IsAuthentic) {
                 processMessage(contextConnection, message);
 
@@ -21,65 +24,82 @@ namespace FileDownloadAndUpload.Core.Xmpp {
             }
 
         }
-        private void processMessage( agsXMPP.XmppSeverConnection contextConnection, Message msg ) {
-            Models.Message dbmsg = entities.Message.Create();
+        private  void processMessage( agsXMPP.XmppSeverConnection contextConnection, Message msg ) {
+            //FileDownloadAndUpload.Models.Message dbmsg = entities.Message.Create();
+            BsonDocument bdm = new BsonDocument();
+            int from=-1;
+            int to = -1;
             //Trace.Write(msg.ToString(),msg.GetType().ToString);
             //dbmsg.Status = 0;
-            dbmsg.Mid = msg.Id;
+            //dbmsg.Mid = msg.Id;
             if(!string.IsNullOrEmpty(msg.Language) && msg.Language.ToUpper().Contains("BASE64")) {
-                dbmsg.Content = EncryptUtil.DecryptBASE64ByGzip(msg.Body);
+                bdm.Add("Content", EncryptUtil.DecryptBASE64ByGzip(msg.Body));
             } else {
-                dbmsg.Content = msg.Body;
+                bdm.Add("Content", msg.Body);
+                //dbmsg.Content = msg.Body;
             }
             if(msg.To != null) {
-                int uid = 0;
+                int toUid = 0;
                 try {
-                    uid = int.Parse(msg.To.User);
-                    dbmsg.To = uid;
+                    toUid = int.Parse(msg.To.User);
+                    bdm.Add("To", toUid+"");
+                    to = toUid;
                 } catch(FormatException fe) {
                     //Trace.Write(fe.Message, fe.GetType().FullName);
                     //throw fe;
                 }
 
                 if(msg.From != null) {
-                    dbmsg.Resource = msg.From.Resource;
+                    bdm.Add("Resource", msg.From.Resource);
+                    //dbmsg.Resource = msg.From.Resource;
                     int fromUid = -1;
                     try {
                         fromUid = int.Parse(msg.From.User);
-                        dbmsg.From = fromUid;
+
+                        bdm.Add("From", fromUid+"");
+                        from= fromUid;
+                        //dbmsg.From = fromUid;
 
                     } catch(FormatException fe) {
-                        Trace.Write("format  the user id of From catch Exception \n:" + fe.Message, fe.GetType().FullName);
+                        //Trace.Write("format  the user id of From catch Exception \n:" + fe.Message, fe.GetType().FullName);
                     }
-
-
                 }
                 // To =0  send to server,  add the connenction to dic
-                if(dbmsg.To.HasValue && dbmsg.To == 0) {
-                    if(dbmsg.From.HasValue) {
-                        msg.SwitchDirection();
-                        contextConnection.Send(msg);
+                //if(to == 0) {
+                //    if(from!=-1) {
+                //        msg.SwitchDirection();
+                //        contextConnection.Send(msg);
 
-                        //if(!XmppConnectionDic.ContainsKey(dbmsg.From.Value)) {
-                        //    XmppConnectionDic.Add(dbmsg.From.Value, contextConnection);
-                        //}
-                    }
-                }
+                //        if(!XmppConnectionDic.ContainsKey(dbmsg.From.Value)) {
+                //            XmppConnectionDic.Add(dbmsg.From.Value, contextConnection);
+                //        }
+                //    }
+                //}
                 //转发 message
-                if(dbmsg.To.HasValue && dbmsg.To > 0) {
+                //int to =
+                if(to > 0) {
                     XmppSeverConnection connection;
-                    if(XmppConnectionDic.TryGetValue(dbmsg.To.Value, out connection)) {
+                    if(XmppConnectionDic.TryGetValue(to, out connection)) {
                         connection.Send(msg);
                     }
                 }
 
             }
-            entities.Message.Add(dbmsg);
-            try {
-                entities.SaveChanges();
-            } catch(Exception e) {
-                Trace.Write("save message to database catch exception :" + e.Message, "messageEntities.SaveChanges()");
-            }
+            bdm.Add("ReceiveTime",new BsonDateTime(DateTime.UtcNow));
+            var messages=  MongoDatabase.GetCollection<BsonDocument>(Config.MessageCollection);
+            messages.InsertOneAsync(bdm);
+            //entities.Message.Add(dbmsg);
+            //try {
+            //    entities.SaveChanges();
+            //    Console.WriteLine(dbmsg.Mid + "保存成功");
+            //} catch(DbEntityValidationException ex) {
+            //    //Trace.Write("save message to database catch exception :" + ex.Message, "messageEntities.SaveChanges()");
+            //    foreach(var i in ex.EntityValidationErrors) {
+            //        foreach(var j in i.ValidationErrors) {
+            //            Console.WriteLine(j.PropertyName + ":" + j.ErrorMessage);
+            //        }
+            //    } 
+            //}
 
         }
     }

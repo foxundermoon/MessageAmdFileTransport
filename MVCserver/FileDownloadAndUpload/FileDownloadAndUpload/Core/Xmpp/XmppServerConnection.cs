@@ -164,7 +164,7 @@ namespace agsXMPP
             // Recv:<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' from='myjabber.net' id='1075705237'>
 
             // Send the Opening Strem to the client
-            string ServerDomain = XmppConfig.ServerIP;
+            string ServerDomain =xmppServer.Config.ServerIp;
 
             this.SessionId = agsXMPP.SessionId.CreateNewId();
 

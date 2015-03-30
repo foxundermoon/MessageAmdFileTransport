@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using FileDownloadAndUpload.Core.Xmpp;
 using FileDownloadAndUpload.Core.Xmpp.Handler;
-using FoxundermoonLib.Diagnostics;
+//using FoxundermoonLib.Diagnostics;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -17,10 +15,12 @@ namespace FileDownloadAndUpload
         /// </summary>
         public static void Registor()
         {
+            Console.WriteLine("Starting ......");
             //启动xmpp服务
             XmppServer.GetInstance().StartUp();
+            Console.WriteLine("Started");
             //启动诊断
-            TraceManager.StartTrace();
+            //TraceManager.StartTrace();
         }
     }
 }

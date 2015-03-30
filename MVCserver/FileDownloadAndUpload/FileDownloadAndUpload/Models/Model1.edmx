@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="FileManagerModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="FileManagerModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="File">
           <Key>
             <PropertyRef Name="ID" />
@@ -38,8 +38,8 @@
           <Property Name="To" Type="int" />
           <Property Name="Time" Type="timestamp" StoreGeneratedPattern="Computed" />
           <Property Name="Status" Type="int" />
-          <Property Name="mid" Type="text" />
-          <Property Name="resource" Type="nchar" MaxLength="15" />
+          <Property Name="Mid" Type="varchar" MaxLength="50" />
+          <Property Name="Resource" Type="varchar" MaxLength="10" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -100,8 +100,7 @@
             <End Role="UserFileRelationShip" EntitySet="UserFileRelationShip" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="FileManagerModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -139,8 +138,8 @@
           <Property Name="To" Type="Int32" />
           <Property Name="Time" Type="Binary" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" />
           <Property Name="Status" Type="Int32" />
-          <Property Name="mid" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="resource" Type="String" MaxLength="15" FixedLength="true" Unicode="true" />
+          <Property Name="Mid" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Resource" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
         </EntityType>
         <EntityType Name="User">
           <Key>
@@ -209,8 +208,8 @@
                 <ScalarProperty Name="To" ColumnName="To" />
                 <ScalarProperty Name="Time" ColumnName="Time" />
                 <ScalarProperty Name="Status" ColumnName="Status" />
-                <ScalarProperty Name="mid" ColumnName="mid" />
-                <ScalarProperty Name="resource" ColumnName="resource" />
+                <ScalarProperty Name="Mid" ColumnName="Mid" />
+                <ScalarProperty Name="Resource" ColumnName="Resource" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

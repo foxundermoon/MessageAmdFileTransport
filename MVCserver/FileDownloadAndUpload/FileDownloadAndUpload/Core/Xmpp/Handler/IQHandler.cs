@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using FileDownloadAndUpload;
 using System.Diagnostics;
 using agsXMPP.protocol.client;
@@ -18,9 +16,9 @@ namespace FileDownloadAndUpload.Core.Xmpp
     {
         public void OnIQ(XmppSeverConnection contextConnection, IQ iq)
         {
-            ProcessIQ(contextConnection, iq);
+            ProcessIQAsync(contextConnection, iq);
         }
-        private void ProcessIQ(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
+        private async void ProcessIQAsync(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
         {
             if (iq.Query.GetType() == typeof(Auth))
             {
@@ -32,12 +30,13 @@ namespace FileDownloadAndUpload.Core.Xmpp
                         iq.Type = IqType.result;
                         auth.AddChild(new Element("password"));
                         //auth.AddChild(new Element("digest"));
+                        Console.WriteLine(auth.Username +" :开始登陆!");
                         contextConnection.Send(iq);
                         break;
                     case IqType.set:
                         // Here we should verify the authentication credentials
                         iq.SwitchDirection();
-                        if (AccountBus.CheckAccount(auth.Username, auth.Password))  //验证用户是否存在或者密码是否正确
+                        if (await AccountBus.CheckAccountAsync(auth.Username, auth.Password))  //验证用户是否存在或者密码是否正确
                         {
                             contextConnection.IsAuthentic = true;
                             iq.Type = IqType.result;
@@ -50,6 +49,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
                                     XmppConnectionDic.Remove(uid);
                                 }
                                 XmppConnectionDic.Add(uid, contextConnection);
+                                Console.WriteLine(auth.Username +": 账号验证成功!");
                             }
                             catch (Exception e)
                             {
@@ -62,6 +62,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
                         {
                             // authorize failed
                             iq.Type = IqType.error;  //若要开启验证功能去掉此注释
+                            Console.WriteLine(auth.Username +":账号验证失败!");
                             //iq.Type = IqType.result;
                             iq.Query = null;
                             iq.Value = "authorized failed";

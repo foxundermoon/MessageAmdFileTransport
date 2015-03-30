@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
+//using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using System.Threading.Tasks;
 
 namespace FileDownloadAndUpload.Core.Account
 {
     public class AccountBus
     {
-        public static bool CheckAccount(string uid ,string pwd)
+        public async static Task<bool> CheckAccountAsync(string uid ,string pwd)
         {
             AccountManage  m = AccountManage.GetInstance();
-            return m.CheckAccount(uid, pwd);
+            return await m.CheckAccountAsync(uid, pwd);
         }
         
     }

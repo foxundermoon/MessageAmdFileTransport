@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLibTests", "..\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleServer", "ConsoleServer\ConsoleServer.csproj", "{8197CBDD-F629-41DB-9392-4C9B4A7C0CF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongodbTest", "MongodbTest\MongodbTest.csproj", "{CECA7936-9746-4A6F-BB52-01F808CD7BF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{8197CBDD-F629-41DB-9392-4C9B4A7C0CF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8197CBDD-F629-41DB-9392-4C9B4A7C0CF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8197CBDD-F629-41DB-9392-4C9B4A7C0CF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
