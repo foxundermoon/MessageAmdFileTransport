@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
     <PublishUrl>发布\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -26,7 +27,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -37,18 +37,20 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
@@ -60,15 +62,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
-    <Reference Include="MongoDB.Bson">
-      <HintPath>C:\Users\foxundermoon\Desktop\CSharpDriver-2.0.0-rc0\MongoDB.Bson.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver">
-      <HintPath>C:\Users\foxundermoon\Desktop\CSharpDriver-2.0.0-rc0\MongoDB.Driver.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver.Core">
-      <HintPath>C:\Users\foxundermoon\Desktop\CSharpDriver-2.0.0-rc0\MongoDB.Driver.Core.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
@@ -77,6 +70,11 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.24.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.24\lib\portable-net45+win8+wpa81\System.Threading.Tasks.Dataflow.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
@@ -85,13 +83,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\Program.cs" />
-    <Compile Include="App_Start\XmppConfig.cs" />
+    <Compile Include="App_Start\XmppLancher.cs" />
     <Compile Include="Core\Account\Account.cs" />
     <Compile Include="Core\Account\AccountBus.cs" />
     <Compile Include="Core\Common\MessageEntityFictory.cs" />
     <Compile Include="Core\Config\Config.cs" />
     <Compile Include="Core\Utils\EncryptUtil.cs" />
     <Compile Include="Core\Utils\HashHelper.cs" />
+    <Compile Include="Core\Utils\MongoUtil.cs" />
     <Compile Include="Core\Utils\MyMd5.cs" />
     <Compile Include="Core\Utils\TimeHelper.cs" />
     <Compile Include="Core\Xmpp\Broadcast\Type.cs" />
@@ -172,6 +171,18 @@
     <ProjectReference Include="..\..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj">
       <Project>{7a04da80-47c9-419c-800c-980b45e955cd}</Project>
       <Name>FoxundermoonLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Bson\MongoDB.Bson.csproj">
+      <Project>{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}</Project>
+      <Name>MongoDB.Bson</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Driver.Core\MongoDB.Driver.Core.csproj">
+      <Project>{da56482a-5d8f-41e0-85e6-1f22b310f91b}</Project>
+      <Name>MongoDB.Driver.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Driver\MongoDB.Driver.csproj">
+      <Project>{ae5166cd-76b0-4911-bd80-ced9521f37a1}</Project>
+      <Name>MongoDB.Driver</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\agsxmpp\agsXMPP2010.csproj">
       <Project>{91ea0d0b-d3ba-497f-afeb-2cad59deba0e}</Project>

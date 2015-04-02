@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLib", "..\..\Li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLibTests", "..\..\Lib\FoxundermoonLib\FoxundermoonLibTests\FoxundermoonLibTests.csproj", "{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmppClientCli", "XmppClientCli\XmppClientCli.csproj", "{C4E5038D-F0A0-479C-B67D-A9B009222F67}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4E5038D-F0A0-479C-B67D-A9B009222F67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4E5038D-F0A0-479C-B67D-A9B009222F67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4E5038D-F0A0-479C-B67D-A9B009222F67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4E5038D-F0A0-479C-B67D-A9B009222F67}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

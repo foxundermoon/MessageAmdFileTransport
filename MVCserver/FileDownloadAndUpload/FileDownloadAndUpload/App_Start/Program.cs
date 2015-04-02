@@ -6,7 +6,7 @@ namespace FileDownloadAndUpload {
   public  class Program {
         [STAThread]
        public static void Main( string[] args ) {
-            XmppConfig.Registor();
+            XmppLauncher.Launch();
             //XmppServer.GetInstance().StartUp();
         }
     }

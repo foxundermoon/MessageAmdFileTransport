@@ -24,7 +24,7 @@ namespace FileDownloadAndUpload.Core.Xmpp {
             }
 
         }
-        private  void processMessage( agsXMPP.XmppSeverConnection contextConnection, Message msg ) {
+        private async  void processMessage( agsXMPP.XmppSeverConnection contextConnection, Message msg ) {
             //FileDownloadAndUpload.Models.Message dbmsg = entities.Message.Create();
             BsonDocument bdm = new BsonDocument();
             int from=-1;
@@ -86,8 +86,14 @@ namespace FileDownloadAndUpload.Core.Xmpp {
 
             }
             bdm.Add("ReceiveTime",new BsonDateTime(DateTime.UtcNow));
-            var messages=  MongoDatabase.GetCollection<BsonDocument>(Config.MessageCollection);
-            messages.InsertOneAsync(bdm);
+            SaveMessage(bdm);
+            //await  MessageCollction.InsertOneAsync(bdm);
+            //}
+            //catch(Exception ex) {
+            //    Console.WriteLine("mongodb exception->"+ex.Message +   ex.Source +ex.StackTrace);
+            //    InitMongoClient();
+            //    ExceptionCollection.InsertOneAsync(MongoUtil.GetExceptionBsonDocument(ex));
+            //}
             //entities.Message.Add(dbmsg);
             //try {
             //    entities.SaveChanges();

@@ -14,11 +14,11 @@ namespace FileDownloadAndUpload.Core.Xmpp
 {
     public partial class XmppServer
     {
-        public void OnIQ(XmppSeverConnection contextConnection, IQ iq)
+        public async void OnIQ(XmppSeverConnection contextConnection, IQ iq)
         {
             ProcessIQAsync(contextConnection, iq);
         }
-        private async void ProcessIQAsync(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
+        private async  void ProcessIQAsync(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
         {
             if (iq.Query.GetType() == typeof(Auth))
             {

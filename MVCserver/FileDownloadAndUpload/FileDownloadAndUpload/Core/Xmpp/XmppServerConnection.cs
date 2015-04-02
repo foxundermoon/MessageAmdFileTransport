@@ -15,6 +15,7 @@ using agsXMPP.Xml.Dom;
 using FileDownloadAndUpload.Core.Account;
 using FileDownloadAndUpload.Core.Xmpp;
 using agsXMPP.protocol.client;
+using System.Configuration;
 
 namespace agsXMPP
 {
@@ -164,7 +165,7 @@ namespace agsXMPP
             // Recv:<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' from='myjabber.net' id='1075705237'>
 
             // Send the Opening Strem to the client
-            string ServerDomain =xmppServer.Config.ServerIp;
+            string ServerDomain = ConfigurationManager.AppSettings["XmppServer"];
 
             this.SessionId = agsXMPP.SessionId.CreateNewId();
 

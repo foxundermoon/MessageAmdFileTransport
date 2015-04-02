@@ -8,12 +8,12 @@ using System.Windows.Forms;
 
 namespace FileDownloadAndUpload
 {
-    public static class XmppConfig
+    public static class XmppLauncher
     {
         /// <summary>
         /// 注册 Xmpp相关配置
         /// </summary>
-        public static void Registor()
+        public static void Launch()
         {
             Console.WriteLine("Starting ......");
             //启动xmpp服务

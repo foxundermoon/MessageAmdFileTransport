@@ -11,7 +11,11 @@ using agsXMPP.Xml.Dom;
 using MongoDB.Driver;
 using System.Configuration;
 using FileDownloadAndUpload.Core.Config;
-
+using MongoDB.Bson;
+using FileDownloadAndUpload.Core.Utils;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 namespace FileDownloadAndUpload.Core.Xmpp {
     public partial class XmppServer {
         static object _lock = new object();
@@ -27,7 +31,11 @@ namespace FileDownloadAndUpload.Core.Xmpp {
         public static Jid ServerJid;
         public MongoDB.Driver.IMongoClient Mongo;
         public IMongoDatabase MongoDatabase;
+        public IMongoCollection<BsonDocument> UsersCollection;
+        public IMongoCollection<BsonDocument> MessageCollction;
+        public IMongoCollection<BsonDocument> ExceptionCollection;
         public Config.ServerConfig Config;
+        ActionBlock<BsonDocument> messageActionBlock;
         public static XmppServer Instance {
             get {
                 lock(_lock) {
@@ -38,11 +46,14 @@ namespace FileDownloadAndUpload.Core.Xmpp {
                 }
             }
         }
-
+        public void SaveMessage( BsonDocument document ) {
+            messageActionBlock.Post(document);
+        }
         private XmppServer( ) {
             initConfig();
             XmppConnectionDic = new Dictionary<int, XmppSeverConnection>();
             ServerJid = new agsXMPP.Jid(Config.ServerUid.ToString(), Config.ServerIp, Config.ServerResource);
+           
         }
 
         private void initConfig( ) {
@@ -55,7 +66,7 @@ namespace FileDownloadAndUpload.Core.Xmpp {
             Config.MongoDatabase=  ConfigurationManager.AppSettings["MongoDatabase"].ToString();
             Config.MongoServer=  ConfigurationManager.AppSettings["MongoServer"].ToString();
             Config.UserCollection= ConfigurationManager.AppSettings["UserCollection"].ToString();
-            Config.XmppPort =int.Parse(ConfigurationManager.AppSettings["XmppPort"].ToString());
+            Config.XmppPort =int.Parse(ConfigurationManager.AppSettings["XmppServerPort"].ToString());
             Config.ServerResource = ConfigurationManager.AppSettings["ServerResource"].ToString();
             Config.ServerIp=  ConfigurationManager.AppSettings["ServerIp"].ToString();
            Config.ServerUid=int.Parse(ConfigurationManager.AppSettings["ServerUid"].ToString());
@@ -71,11 +82,23 @@ namespace FileDownloadAndUpload.Core.Xmpp {
         public static XmppServer GetInstance( ) {
             return Instance;
         }
+        public void InitMongoClient( ) {
+            var mongoSetting = new MongoClientSettings();
+            mongoSetting.ConnectionMode = ConnectionMode.Automatic;
+            mongoSetting.MaxConnectionPoolSize= Convert.ToInt32(ConfigurationManager.AppSettings["MongoMaxConnectionPoolSize"].ToString());
+            mongoSetting.MinConnectionPoolSize =Convert.ToInt32(ConfigurationManager.AppSettings["MongoMinConnectionPoolSize"].ToString());
+            mongoSetting.Server = new MongoServerAddress(ConfigurationManager.AppSettings["MongoServer"], Convert.ToInt32(ConfigurationManager.AppSettings["MongoServerPort"]));
+            mongoSetting.SocketTimeout = TimeSpan.FromSeconds(Convert.ToInt32(ConfigurationManager.AppSettings["MongoSocketTimeout"]));
+            Mongo = new MongoClient(mongoSetting);
+            MongoDatabase = Mongo.GetDatabase(Config.MongoDatabase);
+            UsersCollection = MongoDatabase.GetCollection<BsonDocument>(Config.UserCollection);
+            MessageCollction = MongoDatabase.GetCollection<BsonDocument>(Config.MessageCollection);
+            ExceptionCollection = MongoDatabase.GetCollection<BsonDocument>(ConfigurationManager.AppSettings["ExceptionCollection"]);
+        }
         public void StartUp( ) {
             try {
-
-                Mongo = new MongoClient(ConfigurationManager.AppSettings["MongoServer"].ToString());
-                MongoDatabase = Mongo.GetDatabase(ConfigurationManager.AppSettings["MongoDatabase"].ToString());
+                InitMongoClient();
+                initDatafolw();
                 ThreadStart myThreadDelegate = new ThreadStart(Listen);
                 Thread myThread = new Thread(myThreadDelegate);
                 Console.WriteLine("开始监听 xmpp服务");
@@ -83,6 +106,12 @@ namespace FileDownloadAndUpload.Core.Xmpp {
             } catch(Exception ex) {
                 Console.WriteLine(ex.ToString());
             }
+        }
+
+        private void initDatafolw( ) {
+            messageActionBlock = new ActionBlock<BsonDocument>(document => {
+                MessageCollction.InsertOneAsync(document);
+            });
         }
 
         //废弃
@@ -110,7 +139,6 @@ namespace FileDownloadAndUpload.Core.Xmpp {
         //}
         private void Listen( ) {
             try {
-
                 int port =Config.XmppPort;
                 if(port<1024)
                     port = 5222;
@@ -144,10 +172,12 @@ namespace FileDownloadAndUpload.Core.Xmpp {
 
                 } catch(Exception ex) {
                     Console.WriteLine(ex.ToString());
+                    ExceptionCollection.InsertOneAsync(MongoUtil.GetExceptionBsonDocument(ex));
                 }
 
             } catch(Exception e) {
                 Console.WriteLine(e.ToString());
+                ExceptionCollection.InsertOneAsync(MongoUtil.GetExceptionBsonDocument(e));
             }
         }
 

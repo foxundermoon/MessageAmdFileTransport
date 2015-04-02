@@ -28,7 +28,17 @@ namespace XmppClient
         public event ReLoginFailedHandler OnReloginFailed;
         public event ErrorHandler OnXmppError;
         public XmppClientConnection XmppConnection;
-        static private XmppClient Instance;
+        static private XmppClient instance;
+        static object _lock = new object();
+        public static XmppClient Instance {
+            get {
+                lock(_lock) {
+                    if(instance==null)
+                        instance = new XmppClient();
+                    return instance;
+                }
+            }
+        }
         static private object locked = new object();
         public DataHolder holder = new DataHolder();
         private XmppClient()
@@ -38,16 +48,13 @@ namespace XmppClient
             holder.CurrentConnectCount = 0;
             holder.ReConnectCount = int.Parse(System.Configuration.ConfigurationManager.AppSettings["reconnectcount"].ToString());
         }
+
+        public static XmppClient CreatNewInstance( ) {
+            return new XmppClient();
+        }
         public static XmppClient GetInstance()
         {
-            lock (locked)
-            {
-                if (Instance == null)
-                {
-                    Instance = new XmppClient();
-                }
-                return Instance;
-            }
+            return Instance;
 
         }
         public void StartDaemon()

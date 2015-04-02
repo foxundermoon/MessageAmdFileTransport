@@ -15,7 +15,7 @@ namespace XmppClient
 {
     public partial class XmppClientForm : Form
     {
-        aspDBManager dbm;
+        //aspDBManager dbm;
         public XmppClient xmppClient;
         public HttpClient httpClient;
         private static XmppClientForm ClientInstance;
@@ -103,7 +103,7 @@ namespace XmppClient
             //}));
             string received =  EncryptUtil.DecryptBASE64ByGzip(msg.Body);
             string sql = string.Format(@"UPDATE [dbo].[record]  SET [status] ={0} where [guid]='{1}'",1,msg.Id);
-            dbm.ExecuteSql(sql);
+            //dbm.ExecuteSql(sql);
             this.SafeInvoke(() =>
             {
                 richTextBox1.AppendText(msg.From + "\n\r" + received +"\n");
@@ -128,9 +128,9 @@ namespace XmppClient
 
         private void XmppClientForm_Load(object sender, EventArgs e)
         {
-            dbm = new aspDBManager();
+            //dbm = new aspDBManager();
             string strConn = @"Data Source=10.80.5.222\sqlexpress;Persist Security Info=True;User ID=sa;Password=sql232381204;Database=xmppSend";
-            dbm.Open(strConn);
+            //dbm.Open(strConn);
             //dbm.
             //datetimeLabel.Text = DateTime.Now.ToString();
             toolTipLabel.Text = string.Empty;
@@ -168,7 +168,7 @@ namespace XmppClient
                         xmppClient.XmppConnection.Send(msg);
                         appendText("send :" +textBox1.Text+"\n");
                         string sql = string.Format("INSERT INTO [dbo].[record] ([msg] ,[guid])  VALUES  ('{0}','{1}')",textBox1.Text,msgGuid);
-                        dbm.ExecuteSql(sql);
+                        //dbm.ExecuteSql(sql);
                     }
                     else
                     {
@@ -193,12 +193,12 @@ namespace XmppClient
 
         private void timer2_Tick( object sender, EventArgs e ) {
             textBox2.Text="0";
-            textBox1.Text = generatString(new Random().Next(5, 1000));
+            textBox1.Text = GeneratString(new Random().Next(5, 1000));
             button1.PerformClick();
 
         }
 
-        private string generatString( int p ) {
+        public static string GeneratString( int p ) {
             char[] metaChar = @"引证解释
 \依照情势；顺应时机。
 \《陈书·徐世谱传》：“世谱性机巧，谙解旧法，所造器械，竝随机损益，妙思出人。” 宋陈亮《酌古论·崔浩》：“而不知事固有随机立权者，乌可\以琐琐顾虑哉！”鲁迅《集外集拾遗补编·“骗月亮”》：“他们只想到将来会碰到月亮，放鞭炮去声援，却没有想到也会碰到天狗。并且不知道即\使现在并不声援，将来万一碰到月亮时，也可以随机说出一番道理来敷衍过去的。”[1] 
