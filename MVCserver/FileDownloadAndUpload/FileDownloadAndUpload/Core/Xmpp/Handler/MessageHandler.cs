@@ -15,7 +15,7 @@ using MongoDB.Bson;
 namespace FileDownloadAndUpload.Core.Xmpp {
     public partial class XmppServer {
         public void OnMessage( XmppSeverConnection contextConnection, Message message ) {
-            Console.WriteLine("从 "+message.From.User + "接受到消息 ,id:"+message.Id +" , length:"+ message.Body.Length);
+            //Console.WriteLine("从 "+message.From.User + "接受到消息 ,id:"+message.Id +" , length:"+ message.Body.Length);
             if(contextConnection.IsAuthentic) {
                 processMessage(contextConnection, message);
 
@@ -79,14 +79,14 @@ namespace FileDownloadAndUpload.Core.Xmpp {
                 //int to =
                 if(to > 0) {
                     XmppSeverConnection connection;
-                    if(XmppConnectionDic.TryGetValue(to, out connection)) {
+                    if(XmppConnectionDic.TryGetValue(to.ToString(), out connection)) {
                         connection.Send(msg);
                     }
                 }
 
             }
             bdm.Add("ReceiveTime",new BsonDateTime(DateTime.UtcNow));
-            SaveMessage(bdm);
+            SaveDocument(bdm);
             //await  MessageCollction.InsertOneAsync(bdm);
             //}
             //catch(Exception ex) {

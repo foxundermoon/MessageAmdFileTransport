@@ -7,10 +7,10 @@ namespace FileDownloadAndUpload.Core.Account
 {
     public class AccountBus
     {
-        public async static Task<bool> CheckAccountAsync(string uid ,string pwd)
+        public  static bool CheckAccountAsync(string uid ,string pwd)
         {
             AccountManage  m = AccountManage.GetInstance();
-            return await m.CheckAccountAsync(uid, pwd);
+            return  m.CheckAccount(uid, pwd);
         }
         
     }

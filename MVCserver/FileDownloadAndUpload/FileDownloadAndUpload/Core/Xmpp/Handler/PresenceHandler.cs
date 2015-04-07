@@ -4,6 +4,7 @@ using System.Web;
 using FileDownloadAndUpload;
 using System.Diagnostics;
 using agsXMPP.protocol.client;
+using agsXMPP;
 
 namespace FileDownloadAndUpload.Core.Xmpp
 {
@@ -76,10 +77,11 @@ namespace FileDownloadAndUpload.Core.Xmpp
             ///注销用户
             else if (presence.Type == PresenceType.unsubscribe)
             {
-                int uid = Convert.ToInt32(presence.From.User);
+                string uid = (presence.From.User);
                 if (XmppConnectionDic.ContainsKey(uid))
                 {
-                    XmppConnectionDic.Remove(uid);
+                    XmppSeverConnection _;
+                    XmppConnectionDic.TryRemove(uid,out _);
                 }
                 Broadcast(presence);
                 presence.Type = PresenceType.unsubscribed;

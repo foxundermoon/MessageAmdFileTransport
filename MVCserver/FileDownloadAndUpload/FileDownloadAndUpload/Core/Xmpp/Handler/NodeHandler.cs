@@ -15,12 +15,12 @@ namespace FileDownloadAndUpload.Core.Xmpp
         {
             //process all the node;
             //ig nore
-            if(node.GetType() == typeof(Element)) {
-                Element e = node as Element;
-                if(e.HasTag("base64")) {
-                    e.Value = EncryptUtil.DecryptBASE64ByGzip(e.Value);
-                }
-            }
+            //if(node.GetType() == typeof(Element)) {
+            //    Element e = node as Element;
+            //    if(e.HasTag("base64")) {
+            //        e.Value = EncryptUtil.DecryptBASE64ByGzip(e.Value);
+            //    }
+            //}
         }
     }
 }

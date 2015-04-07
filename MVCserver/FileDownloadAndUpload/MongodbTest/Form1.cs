@@ -21,37 +21,37 @@ namespace MongodbTest {
         private async void button1_Click( object sender, EventArgs e ) {
 
             var client = new MongoClient("mongodb://localhost:27017");
-            var database = client.GetDatabase("foo");
+            var database = client.GetServer().GetDatabase("foo");
             var collection = database.GetCollection<BsonDocument>("bar");
 
-            await collection.InsertOneAsync(new BsonDocument("Name", "Jack"));
+            //await collection.InsertOneAsync(new BsonDocument("Name", "Jack"));
 
 
-            var list = await collection.Find(new BsonDocument("Name", "Jack"))
-                .ToListAsync();
+            //var list = await collection.Find(new BsonDocument("Name", "Jack"))
+            //    .ToListAsync();
 
 
-            foreach(var document in list) {
-                Console.WriteLine(document["Name"]);
-            }
+            //foreach(var document in list) {
+            //    Console.WriteLine(document["Name"]);
+            //}
         }
 
         private async void button2_Click( object sender, EventArgs e ) {
-            var client = new MongoClient("mongodb://localhost:27017");
-            var database = client.GetDatabase("jnsw");
-            var collection = database.GetCollection<BsonDocument>("user");
-            //for(var i=0; i<100; i++) {
-            //    var u = new  User();
-            //    u.Name=i+"";
-            //    u.Password="123456";
-            //     await collection.InsertOneAsync(u);
-            //}
+        //    var client = new MongoClient("mongodb://localhost:27017");
+        //    var database = client.GetDatabase("jnsw");
+        //    var collection = database.GetCollection<BsonDocument>("user");
+        //    //for(var i=0; i<100; i++) {
+        //    //    var u = new  User();
+        //    //    u.Name=i+"";
+        //    //    u.Password="123456";
+        //    //     await collection.InsertOneAsync(u);
+        //    //}
 
-            User quser = new User { Password="123456" };
-            var pasd = new BsonString("123456");
-            var list = await collection.Find(qd =>qd["Password"] == pasd)
-                .ToListAsync();
-            Console.Write(list.ToJson());
+        //    User quser = new User { Password="123456" };
+        //    var pasd = new BsonString("123456");
+        //    var list = await collection.Find(qd =>qd["Password"] == pasd)
+        //        .ToListAsync();
+        //    Console.Write(list.ToJson());
         }
 
     }

@@ -94,6 +94,8 @@
     <Compile Include="Core\Utils\MyMd5.cs" />
     <Compile Include="Core\Utils\TimeHelper.cs" />
     <Compile Include="Core\Xmpp\Broadcast\Type.cs" />
+    <Compile Include="Core\Xmpp\Cast\XmppServer.cs" />
+    <Compile Include="Core\Xmpp\DataBaseOpration\XmppServer.cs" />
     <Compile Include="Core\Xmpp\Handler\HandlerException.cs" />
     <Compile Include="Core\Xmpp\Handler\IQHandler.cs" />
     <Compile Include="Core\Xmpp\Handler\MessageHandler.cs" />
@@ -168,21 +170,17 @@
     <Folder Include="UploadFiles\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj">
-      <Project>{7a04da80-47c9-419c-800c-980b45e955cd}</Project>
-      <Name>FoxundermoonLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Bson\MongoDB.Bson.csproj">
+    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Bson\MongoDB.Bson.csproj">
       <Project>{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}</Project>
       <Name>MongoDB.Bson</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Driver.Core\MongoDB.Driver.Core.csproj">
-      <Project>{da56482a-5d8f-41e0-85e6-1f22b310f91b}</Project>
-      <Name>MongoDB.Driver.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Lib\mongo-csharp-driver-2.0.0-rc0\src\MongoDB.Driver\MongoDB.Driver.csproj">
+    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Driver\MongoDB.Driver.csproj">
       <Project>{ae5166cd-76b0-4911-bd80-ced9521f37a1}</Project>
       <Name>MongoDB.Driver</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj">
+      <Project>{7a04da80-47c9-419c-800c-980b45e955cd}</Project>
+      <Name>FoxundermoonLib</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\agsxmpp\agsXMPP2010.csproj">
       <Project>{91ea0d0b-d3ba-497f-afeb-2cad59deba0e}</Project>

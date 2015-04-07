@@ -20,7 +20,7 @@ using System.Configuration;
 namespace agsXMPP
 {
     /// <summary>
-    /// Zusammenfassung f黵 XMPPSeverConnection.
+    /// Zusammenfassung  XMPPSeverConnection.
     /// </summary>
     public class XmppSeverConnection
     {
@@ -53,7 +53,7 @@ namespace agsXMPP
         #endregion
         private StreamParser streamParser;
         private Socket m_Sock;
-        private const int BUFFERSIZE = 1024;
+        private const int BUFFERSIZE = 2048;
         private byte[] buffer = new byte[BUFFERSIZE];
         private FileDownloadAndUpload.Core.Xmpp.XmppServer xmppServer;
         public bool IsAuthentic { get; set; }
@@ -81,11 +81,7 @@ namespace agsXMPP
                 }
             }catch(Exception e)
             {
-            
-            
             }
-
-            
         }
 
         public void Send(string data)
@@ -141,7 +137,9 @@ namespace agsXMPP
 
         private void streamParser_OnStreamStart(object sender, Node e)
         {
-            SendOpenStream();
+            try {
+                SendOpenStream();
+            } catch(Exception ignore) { }
         }
         private void streamParser_OnStreamEnd(object sender, Node e)
         {
@@ -150,6 +148,7 @@ namespace agsXMPP
 
         private void streamParser_OnStreamElement(object sender, Node node)
         {
+            try {
             if (OnNode != null)
                 OnNode(this, node);
             if (OnIq != null && node.GetType() == typeof(IQ))
@@ -158,6 +157,10 @@ namespace agsXMPP
                 OnMessage(this, node as Message);
             if (OnPresence != null && node.GetType() == typeof(Presence))
                 OnPresence(this, node as Presence);
+            } catch(Exception ignore) {
+
+            }
+
         }
         private void SendOpenStream()
         {

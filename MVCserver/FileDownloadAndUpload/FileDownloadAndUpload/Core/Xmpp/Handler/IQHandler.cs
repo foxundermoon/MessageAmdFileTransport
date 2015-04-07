@@ -18,7 +18,7 @@ namespace FileDownloadAndUpload.Core.Xmpp
         {
             ProcessIQAsync(contextConnection, iq);
         }
-        private async  void ProcessIQAsync(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
+        private   void ProcessIQAsync(agsXMPP.XmppSeverConnection contextConnection, IQ iq)
         {
             if (iq.Query.GetType() == typeof(Auth))
             {
@@ -36,19 +36,29 @@ namespace FileDownloadAndUpload.Core.Xmpp
                     case IqType.set:
                         // Here we should verify the authentication credentials
                         iq.SwitchDirection();
-                        if (await AccountBus.CheckAccountAsync(auth.Username, auth.Password))  //验证用户是否存在或者密码是否正确
+                        if ( AccountBus.CheckAccountAsync(auth.Username, auth.Password))  //验证用户是否存在或者密码是否正确
                         {
                             contextConnection.IsAuthentic = true;
                             iq.Type = IqType.result;
                             iq.Query = null;
                             try
                             {
-                                int uid = int.Parse(auth.Username);
+                                string uid = (auth.Username);
+                                //Func<int,XmppSeverConnection,XmppSeverConnection> update = (k,v)=>{return v;};
+                                //XmppConnectionDic.AddOrUpdate(uid, contextConnection),(k,v)=>{return v;});
+
                                 if (XmppConnectionDic.ContainsKey(uid))
                                 {
-                                    XmppConnectionDic.Remove(uid);
+                                    XmppSeverConnection _;
+                                    if(!XmppConnectionDic.TryRemove(uid, out _)) {
+                                        Console.WriteLine("Remove "+uid +" connection  failued");
+                                        Console.ReadKey();
+                                    }
                                 }
-                                XmppConnectionDic.Add(uid, contextConnection);
+                                if(!XmppConnectionDic.TryAdd(uid, contextConnection)) {
+                                    Console.WriteLine("add  "+uid +" connection  failued");
+                                    Console.ReadKey();
+                                }
                                 Console.WriteLine(auth.Username +": 账号验证成功!");
                             }
                             catch (Exception e)

@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace MongodbTest {
     class Program {
@@ -19,21 +22,80 @@ namespace MongodbTest {
             if(args!=null && args.Length>0) {
                 MongodbTest(args[0]);
             }
-            MongoLinqTest();
+            //MongoLinqTest();
+            DataFlowTest();
 
             //new Form1().Show();
         }
 
-        private static void MongoLinqTest( ) {
+        private static void DataFlowTest( ) {
+            var count =0;
             var seetings = new MongoClientSettings();
             var _lock = new object();
             seetings.MaxConnectionPoolSize=1000;
             seetings.Server = new MongoDB.Driver.MongoServerAddress("10.80.5.251", 27017);
             var client = new MongoClient(seetings);
-            var database = client.GetDatabase("performTest_1000000");
-            var collection = database.GetCollection<BsonDocument>("test1");
+            var database = client.GetServer().GetDatabase("dataflow");
+            var collection = database.GetCollection<BsonDocument>("message");
+
+            var exeOption = new ExecutionDataflowBlockOptions();
+            exeOption.MaxMessagesPerTask = 3;
+            //exeOption. =new  LimitedConcurrencyLevelTaskScheduler(3);
+            exeOption.SingleProducerConstrained=false;
+            var insert = new ActionBlock<BsonDocument>(d => { collection.Insert(d); },exeOption);
+            Parallel.For(1, 1000000, i => {
+                var doc=new BsonDocument { 
+                {"name","test name"},
+                {"number",i},
+                {"datetime",DateTime.UtcNow}
+                };
+                collection.Insert(doc);
+                count++;
+                if(count==100) {
+                    count=0;
+                    Console.WriteLine("inserted "+i);
+                }
+            });
+            Console.ReadKey();
+
+        
+        }
+
+        private static void MongoLinqTest( ) {
+            var count =0;
+            var seetings = new MongoClientSettings();
+            var _lock = new object();
+            seetings.MaxConnectionPoolSize=1000;
+            seetings.Server = new MongoDB.Driver.MongoServerAddress("10.80.5.251", 27017);
+            var client = new MongoClient(seetings);
+            var database = client.GetServer().GetDatabase("jnsw");
+            var collection = database.GetCollection<BsonDocument>("users");
+
+            var query = from u in collection.AsQueryable<BsonDocument>()
+                        where u["Password"]=="123456" && u["Name"]=="1"
+                        select u;
+            var result = query;
+            Console.WriteLine(query.Count());
+            foreach(var item in result) {
+                Console.WriteLine("document"+item.AsBsonDocument);
+                var psd = item["Password"];
+                Console.WriteLine("document[\"Password\"]"+ psd);
+                count++;
+                if(count==100) {
+                    count=0;
+                    Console.WriteLine("inserted ");
+                }
+            }
+            Console.ReadKey();
 
 
+
+        }
+
+        struct User {
+            public ObjectId Id { get; set; }
+            public string Password { get; set; }
+            public string Name { get; set; }
         }
 
         private static void MongodbTest(string arg ) {
@@ -45,7 +107,7 @@ namespace MongodbTest {
             seetings.MaxConnectionPoolSize=1000;
             seetings.Server = new MongoDB.Driver.MongoServerAddress("10.80.5.251", 27017);
             var client = new MongoClient(seetings);
-            var database = client.GetDatabase("performTest_1000000");
+            var database = client.GetServer().GetDatabase("performTest_1000000");
             var collection = database.GetCollection<BsonDocument>("test1");
             var start = DateTime.UtcNow;
             int count =0;
@@ -75,7 +137,7 @@ namespace MongodbTest {
                 {"datetime",DateTime.UtcNow}
                 };
 
-                    collection.InsertOneAsync(dom);
+                    collection.Insert(dom);
                     count++;
                     if(count==100) {
                         count=0;

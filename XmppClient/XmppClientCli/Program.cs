@@ -22,6 +22,41 @@ namespace XmppClientCli {
         Timer autoSending;
         XmppClient.XmppClient xmppClient;
         static void Main( string[] args ) {
+            if(args!=null && args.Length>=1) {
+                ClientProfi(args);
+            } else {
+               
+            }
+            ClientMutiSend();
+            Console.ReadKey();
+        }
+
+        private static void ClientMutiSend( ) {
+            Program p = new Program();
+            var xmppClient = XmppClient.XmppClient.Instance;
+            xmppClient.Password = "123456";
+            xmppClient.ServerJid = new Jid("80000@"+xmppServer+"/server");
+            xmppClient.LocalJid = new Jid("0@"+xmppServer+"/XmppCli");
+            p.xmppClient = xmppClient;
+            xmppClient.Login();
+            p.regEvent();
+
+           
+        }
+
+    
+
+        private static Message CreatRandomMsg( ) {
+            Message msg = new Message();
+            msg.To = new Jid("0@10.80.5.222/client");
+            msg.From = new Jid("80000@10.80.5.222/server");
+            msg.Id=Guid.NewGuid().ToString().Replace("-","");
+            msg.Body = GeneratString(80000);
+            return msg;
+
+        }
+
+        private static void ClientProfi( string[] args ) {
             int from=-1;
             int to=-1;
             int threadPerProcess =100;
@@ -41,7 +76,7 @@ namespace XmppClientCli {
                         mutiprocess = true;
                     if(arg.ToLower().Contains("single"))
                         single=true;
-                    
+
                 }
                 for(var i=0; i<args.Length; i++) {
                     if(args[i].ToLower().Contains("name")) {
@@ -51,7 +86,7 @@ namespace XmppClientCli {
                         password = args[i+1];
                     }
                     if(args[i].ToLower().Contains("threadnumber"))
-                        int.TryParse(args[i+1],out threadPerProcess);
+                        int.TryParse(args[i+1], out threadPerProcess);
                 }
                 if(!single) {
                     if(name !=null && name.Contains(":")) {
@@ -66,21 +101,18 @@ namespace XmppClientCli {
                 //var database =  mongClient.GetDatabase("XmppClient");
                 //collection =database.GetCollection<BsonDocument>("Sent");
                 //errorColection =database.GetCollection<BsonDocument>("XmppError");
-                if(single){
+                if(single) {
                     L("single client longin-> user:"+name +"  password:"+password);
                     SingleLogin(name, password);
-                }
-                else if(mutiprocess && !mutithread)
-                {
+                } else if(mutiprocess && !mutithread) {
                     L("mutiprocess login");
                     MutiProcessLogin(from, to, password);
-                }
-                else if(mutithread && !mutiprocess) {
+                } else if(mutithread && !mutiprocess) {
                     L("muti thread longin");
                     MutiThreadLogin(from, to, password);
                 } else if(mutiprocess && mutiprocess) {
                     L("muti process and thread longin");
-                    MutiProcessAndThread(from, to, password,threadPerProcess);
+                    MutiProcessAndThread(from, to, password, threadPerProcess);
                     //L("must just onlyone mutiThread or mutiProcess ");
                 }
 
@@ -95,6 +127,21 @@ namespace XmppClientCli {
             xmppClient.XmppConnection.OnLogin +=XmppConnection_OnLogin;
             xmppClient.XmppConnection.OnMessage +=XmppConnection_OnMessage;
             xmppClient.XmppConnection.OnError +=XmppConnection_OnError;
+            //xmppClient.OnLogin+=xmppClient_OnLogin;
+        }
+
+        void xmppClient_OnLogin( object sender ) {
+            try {
+
+            for(var i=1; 1<100000; i++) {
+                xmppClient.XmppConnection.Send(CreatRandomMsg());
+                Console.WriteLine(i+ "sended");
+                Thread.Sleep(100);
+            }
+            } catch(Exception e) {
+                Console.WriteLine(e.Message);
+            }
+
         }
 
         void XmppConnection_OnError( object sender, Exception ex ) {
@@ -126,7 +173,7 @@ namespace XmppClientCli {
                 //    {"to",xmppClient.ServerJid.User},
                 //    {"stime",new BsonDateTime(DateTime.UtcNow)}
                 //});
-            }, null, 0, 30000);
+            }, null, 0, 1000);
         }
 
         private static void MutiProcessAndThread( int from, int to, string password,int threadPerProcess ) {
