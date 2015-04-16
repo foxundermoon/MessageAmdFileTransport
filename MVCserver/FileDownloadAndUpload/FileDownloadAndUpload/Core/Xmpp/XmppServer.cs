@@ -21,7 +21,6 @@ using System.Threading.Tasks.Dataflow;
 namespace FileDownloadAndUpload.Core.Xmpp {
     public partial class XmppServer {
         static object _lock = new object();
-        Models.Entities entities = Core.Common.MessageEntityFictory.ModelsEntities;
         // Thread signal.
         private ManualResetEvent allDone = new ManualResetEvent(false);
         private Socket listener;
@@ -33,11 +32,7 @@ namespace FileDownloadAndUpload.Core.Xmpp {
         public static Jid ServerJid;
         public MongoServer Mongo;
         public MongoDatabase MongoDatabase;
-        public MongoCollection<BsonDocument> UsersCollection;
-        public MongoCollection<BsonDocument> MessageCollction;
-        public MongoCollection<BsonDocument> ExceptionCollection;
         public Config.ServerConfig Config;
-        ActionBlock<BsonDocument> messageActionBlock;
         public static XmppServer Instance {
             get {
                 lock(_lock) {
@@ -83,8 +78,6 @@ namespace FileDownloadAndUpload.Core.Xmpp {
 
         public void StartUp( ) {
             try {
-                InitMongoClient();
-                initDatafolw();
                 ThreadStart myThreadDelegate = new ThreadStart(Listen);
                 Thread myThread = new Thread(myThreadDelegate);
                 Console.WriteLine("开始监听 xmpp服务");

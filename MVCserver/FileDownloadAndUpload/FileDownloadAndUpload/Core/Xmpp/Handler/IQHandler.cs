@@ -8,7 +8,6 @@ using agsXMPP.Xml.Dom;
 using FileDownloadAndUpload.Core.Account;
 using agsXMPP.protocol.iq.roster;
 using agsXMPP;
-using FileDownloadAndUpload.Models;
 
 namespace FileDownloadAndUpload.Core.Xmpp
 {

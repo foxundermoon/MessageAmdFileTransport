@@ -8,58 +8,33 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace XmppClient
-{
-    public partial class LoginForm : Form
-    {
+namespace XmppClient {
+    public partial class LoginForm : Form {
         XmppClientForm client;
-        public bool AutoLogin { get; set;}
+        public bool AutoLogin { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
         public bool AutoSend { get; set; }
-        public LoginForm()
-        {
+        public LoginForm( ) {
             InitializeComponent();
         }
-        private void button2_Click(object sender, EventArgs e)
-        {
+        private void button2_Click( object sender, EventArgs e ) {
             this.Close();
             System.Environment.Exit(0);
         }
-        private void button1_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(textBox2.Text))
-            {
+        private void button1_Click( object sender, EventArgs e ) {
+            if(string.IsNullOrWhiteSpace(textBox2.Text)) {
                 label4.ForeColor = Color.Red;
                 label4.Text = "请输入密码";
-            }
-            else
-            {
-
+            } else if(string.IsNullOrWhiteSpace(textBox2.Text)) {
                 label3.ForeColor = Color.Red;
-                try
-                {
-                    int un = int.Parse(textBox1.Text);
-                    if (un > 0)
-                    {
-                        login();
-                    }
-                    else
-                    {
-                        label3.Text = "请输入大于0的数字";
-
-                    }
-                }
-                catch (Exception ce)
-                {
-                    label3.Text = "请输入数字";
-
-                }
+                label3.Text ="请输入用户名";
+            }else{
+                login();
             }
         }
 
-        private void login()
-        {
+        private void login( ) {
             button1.Enabled = false;
             XmppClientForm.Uinfo user = new XmppClientForm.Uinfo();
             user.Unumber = textBox1.Text;
@@ -74,46 +49,35 @@ namespace XmppClient
             timer1.Enabled = true;
         }
 
-        private void onlogin(object sender)
-        {
-            OnLogined logined = delegate()
-            {
-                try
-                {
+        private void onlogin( object sender ) {
+            OnLogined logined = delegate( ) {
+                try {
                     client.Show();
                     //this.Close();
                     this.Hide();
-                }
-                catch (Exception we)
-                {
+                } catch(Exception we) {
                     string msg = we.Message;
                 }
             };
-            try
-            {
-                if (this.InvokeRequired)
-                {
+            try {
+                if(this.InvokeRequired) {
                     this.Invoke(logined);
-                }
-                else
-                {
+                } else {
                     logined();
                 }
-            }
-            catch (Exception ignore) {
+            } catch(Exception ignore) {
                 string msg = ignore.Message;
             }
 
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
-        {
+        private void timer1_Tick( object sender, EventArgs e ) {
             button1.Enabled = true;
             toolStripStatusLabel1.Text = "登录失败";
             timer1.Enabled = false;
 
         }
-        private delegate void OnLogined();
+        private delegate void OnLogined( );
 
         private void LoginForm_Load( object sender, EventArgs e ) {
             if(AutoLogin) {

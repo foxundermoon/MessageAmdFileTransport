@@ -154,10 +154,10 @@ namespace XmppClientCli {
         }
 
         void XmppConnection_OnMessage( object sender, agsXMPP.protocol.client.Message msg ) {
-            L(xmppClient.Uid + "received msg  content:"+msg.Body.Substring(0, msg.Body.Length>20?20:msg.Body.Length));
+            L(xmppClient.Name + "received msg  content:"+msg.Body.Substring(0, msg.Body.Length>20?20:msg.Body.Length));
         }
         void XmppConnection_OnLogin( object sender ) {
-            L(xmppClient.Uid + "login success");
+            L(xmppClient.Name + "login success");
             autoSending = new Timer(( state ) => {
                 Message msg = new Message();
                 msg.To = xmppClient.ServerJid;
@@ -166,7 +166,7 @@ namespace XmppClientCli {
                 msg.Body = EncryptUtil.EncryptBASE64ByGzip(sentCon);
                 msg.Id= Guid.NewGuid().ToString().Replace("-", "");
                 xmppClient.XmppConnection.Send(msg);
-                L(xmppClient.Uid +" send a message to server, length:"+sentCon.Length);
+                L(xmppClient.Name +" send a message to server, length:"+sentCon.Length);
                 //collection.InsertOneAsync(new BsonDocument {
                 //    {"Content",sentCon},
                 //    {"from",xmppClient.Uid},
@@ -194,7 +194,7 @@ namespace XmppClientCli {
                         info.Arguments = "--mutithread -name "
                             +(from+(i-1)*threadPerProcess)+":"+
                             ((from+i*threadPerProcess)>to? to: (from+i*threadPerProcess))
-                            +" -password 123456 --m_utiprocess";
+                            +" -password 123456";
                         L(info.Arguments);
                         Process.Start(info);
                         L("sleep wait .......");
@@ -238,6 +238,7 @@ namespace XmppClientCli {
                 //var xmppClient = XmppClient.XmppClient.Instance;
                 var xmppClient = XmppClient.XmppClient.CreatNewInstance();
                 xmppClient.Password = password;
+                xmppClient.Name = Convert.ToString(i);
                 xmppClient.ServerJid = new Jid("0@"+xmppServer+"/server");
                 xmppClient.LocalJid = new Jid(i+"@"+xmppServer+"/XmppCli");
                 p.xmppClient = xmppClient;
@@ -254,6 +255,7 @@ namespace XmppClientCli {
             xmppClient.Password = password;
             xmppClient.ServerJid = new Jid("0@"+ xmppServer +"/server");
             xmppClient.LocalJid = new Jid(name+"@"+xmppServer+"/XmppCli");
+            xmppClient.Name = name;
             p.xmppClient = xmppClient;
             //p.regEvent();
             L(name +" start login...");
@@ -261,6 +263,7 @@ namespace XmppClientCli {
 
         }
         void run( ) {
+            L(xmppClient.Name +" start login ");
             xmppClient.Login();
             regEvent();
 

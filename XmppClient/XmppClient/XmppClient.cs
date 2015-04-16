@@ -6,14 +6,12 @@ using System.Threading.Tasks;
 using agsXMPP;
 using agsXMPP.protocol.client;
 using System.Threading;
-namespace XmppClient
-{
-    public class XmppClient
-    {
+namespace XmppClient {
+    public class XmppClient {
         public bool IsRunDaemon { get; set; }
         public Jid LocalJid { get; set; }
         public Jid ServerJid { get; set; }
-        public int Uid { get; set; }
+        public string Name { get; set; }
         public Thread DaemonThread { get; set; }
         private PingRequest pingRequest;
         private PingResponse pingRespose;
@@ -41,8 +39,7 @@ namespace XmppClient
         }
         static private object locked = new object();
         public DataHolder holder = new DataHolder();
-        private XmppClient()
-        {
+        private XmppClient( ) {
             pinginterval = int.Parse(System.Configuration.ConfigurationManager.AppSettings["pinginterval"].ToString());
             ServerJid = new Jid("0", System.Configuration.ConfigurationManager.AppSettings["xmppserver"].ToString(), "server");
             holder.CurrentConnectCount = 0;
@@ -52,64 +49,47 @@ namespace XmppClient
         public static XmppClient CreatNewInstance( ) {
             return new XmppClient();
         }
-        public static XmppClient GetInstance()
-        {
+        public static XmppClient GetInstance( ) {
             return Instance;
 
         }
-        public void StartDaemon()
-        {
+        public void StartDaemon( ) {
             IsRunDaemon = true;
             ThreadStart ts = new ThreadStart(_startDaemon);
             DaemonThread = new Thread(ts);
             //DaemonThread.Start();
         }
-        private void check()
-        {
+        private void check( ) {
             sendPing();
             Thread.Sleep(pinginterval * 1000);
-            if (pingRespose.PingID.Trim() != pingRequest.PingID.Trim())
-            {
+            if(pingRespose.PingID.Trim() != pingRequest.PingID.Trim()) {
                 IsLongined = false;
                 ErrorMessage args = new ErrorMessage("连接丢失!,开始第" + holder.CurrentConnectCount + "次重连");
                 XmppErrorHandler(this, args);
-                if (holder.CanReconnect)
-                {
+                if(holder.CanReconnect) {
                     reConnect();
-                }
-                else
-                {
-                    if (OnReloginFailed != null)
-                    {
+                } else {
+                    if(OnReloginFailed != null) {
                         ErrorMessage failed = new ErrorMessage("登录失败 重试次数已满");
                         OnReloginFailed(this, failed);
                     }
                 }
             }
         }
-        private void _startDaemon()
-        {
-            while (IsRunDaemon)
-            {
-                try
-                {
+        private void _startDaemon( ) {
+            while(IsRunDaemon) {
+                try {
                     check();
-                }
-                catch (Exception e)
-                {
+                } catch(Exception e) {
                     IsLongined = false;
-                    if (holder.CanReconnect)
-                    {
+                    if(holder.CanReconnect) {
 
                         ErrorMessage args = new ErrorMessage("数据连接错误!" + holder.CurrentConnectCount + "次重连");
                         args.ErrorMsg += e.Message;
                         XmppErrorHandler(this, args);
                         reConnect();
-                    }
-                    else
-                    {
-                        if (OnReloginFailed != null)
-                        {
+                    } else {
+                        if(OnReloginFailed != null) {
                             ErrorMessage failed = new ErrorMessage("登录失败 重试次数已满");
                             OnReloginFailed(this, failed);
                         }
@@ -118,15 +98,13 @@ namespace XmppClient
             }
         }
 
-        private void reConnect()
-        {
+        private void reConnect( ) {
             holder.CurrentConnectCount++;
             XmppConnection.Close();
             Login();
             //_startDaemon();
         }
-        private void subscrib()
-        {
+        private void subscrib( ) {
             Presence sub = new Presence();
             sub.Status = "online";
             sub.Type = PresenceType.subscribe;
@@ -136,8 +114,7 @@ namespace XmppClient
             sub.From = LocalJid;
             XmppConnection.Send(sub);
         }
-        private void sendPing()
-        {
+        private void sendPing( ) {
 
             string tmpID = Guid.NewGuid().ToString();
             pingRequest = new PingRequest();
@@ -152,40 +129,17 @@ namespace XmppClient
             heart.Status = "ping";
             XmppConnection.Send(heart);
         }
-        public void Login()
-        {
-            string userName;
-            if (LocalJid != null)
-            {
-                userName = LocalJid.User;
-                try
-                {
-                    Uid = int.Parse(userName);
-                }
-                catch (Exception fe)
-                {
-                    throw new ClientException("用户id必须为数字!");
-                }
+        public void Login( ) {
+            if(string.IsNullOrWhiteSpace(Name)) {
+                throw new ClientException("用户id不能为空!");
+            } else {
+                LocalJid = new Jid(Name, System.Configuration.ConfigurationManager.AppSettings["xmppserver"].ToString(), "winform");
             }
-            else
-            {
-                if (Uid > 0)
-                {
-                    LocalJid = new Jid(Uid.ToString(), System.Configuration.ConfigurationManager.AppSettings["xmppserver"].ToString(), "winform");
-                }
-                else
-                {
-                    throw new ClientException("用户id不能为空!");
-                }
-            }
-            if (string.IsNullOrWhiteSpace(Password))
+            if(string.IsNullOrWhiteSpace(Password))
                 throw new ClientException("Password is empty!");
-            if (XmppConnection == null)
-            {
+            if(XmppConnection == null) {
                 XmppConnection = new XmppClientConnection(LocalJid.Server);
-            }
-            else
-            {
+            } else {
                 XmppConnection.Close();
             }
             XmppConnection.OnLogin += new ObjectHandler(XmppClient_OnLogin);
@@ -197,56 +151,41 @@ namespace XmppClient
             XmppErrorHandler += XmppClient_XmppErrorHandler;
         }
 
-        private void XmppConnection_OnError(object sender, Exception ex)
-        {
-            if (OnXmppError != null)
+        private void XmppConnection_OnError( object sender, Exception ex ) {
+            if(OnXmppError != null)
                 OnXmppError(sender, ex);
         }
-        private void XmppConnecion_OnIQ(object sender, IQ iq)
-        {
-            if (OnIQ != null)
+        private void XmppConnecion_OnIQ( object sender, IQ iq ) {
+            if(OnIQ != null)
                 OnIQ(sender, iq);
         }
-        void XmppClient_XmppErrorHandler(object sender, ErrorMessage msg)
-        {
-            if (msg.ErrT == ErrorMessage.ErrorType.AuthernitedFailed)
-            {
+        void XmppClient_XmppErrorHandler( object sender, ErrorMessage msg ) {
+            if(msg.ErrT == ErrorMessage.ErrorType.AuthernitedFailed) {
                 IsRunDaemon = false;
             }
         }
-        void XmppClient_OnLogin(object sender)
-        {
+        void XmppClient_OnLogin( object sender ) {
             IsLongined = true;
             holder.CurrentConnectCount = 0;
-            if (OnLogin != null)
+            if(OnLogin != null)
                 OnLogin(this);
         }
-        void XmppConnection_OnPresence(object sender, Presence pres)
-        {
-            if (OnPresence != null)
+        void XmppConnection_OnPresence( object sender, Presence pres ) {
+            if(OnPresence != null)
                 OnPresence(sender, pres);
-            if (pres.Type == PresenceType.available)
-            {
-                if (pres.HasTag("ping-response") || pres.Status == "pinged")
-                {
+            if(pres.Type == PresenceType.available) {
+                if(pres.HasTag("ping-response") || pres.Status == "pinged") {
                     pingRespose.PingID = pres.Id;
                     pingRespose.ResponseTime = DateTime.UtcNow.Ticks;
-                }
-                else if (pres.HasTag("ping"))
-                {
-                    if (pres.Error != null)
-                    {
+                } else if(pres.HasTag("ping")) {
+                    if(pres.Error != null) {
                         XmppErrorHandler(this, new ErrorMessage("认证失败:" + pres.Error.Type + pres.Error.Value));
                         IsLongined = false;
                     }
                 }
-            }
-            else if (pres.Type == PresenceType.subscribed)
-            {
-                if (pres.Id == holder.Id)
-                {
-                    if (pres.Value == "ok")
-                    {
+            } else if(pres.Type == PresenceType.subscribed) {
+                if(pres.Id == holder.Id) {
+                    if(pres.Value == "ok") {
                         IsLongined = true;
                         holder.Subscribed = true;
                         holder.DateTime = DateTime.UtcNow.Ticks;
@@ -256,14 +195,12 @@ namespace XmppClient
                 }
             }
         }
-        void XmppConnection_OnMessage(object sender, Message msg)
-        {
-            if (OnMessage != null)
+        void XmppConnection_OnMessage( object sender, Message msg ) {
+            if(OnMessage != null)
                 OnMessage(sender, msg);
         }
     }
-    public struct DataHolder
-    {
+    public struct DataHolder {
         public string Id { get; set; }
         public string Name { get; set; }
         public long DateTime { get; set; }
@@ -271,10 +208,8 @@ namespace XmppClient
         public int CurrentConnectCount { get; set; }
         public int ReConnectCount { get; set; }
 
-        public bool CanReconnect
-        {
-            get
-            {
+        public bool CanReconnect {
+            get {
                 return CurrentConnectCount <= ReConnectCount;
             }
         }

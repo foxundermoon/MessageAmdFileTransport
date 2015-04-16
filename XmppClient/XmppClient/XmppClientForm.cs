@@ -32,7 +32,7 @@ namespace XmppClient
             set
             {
                 userInfo = value;
-                xmppClient.Uid = int.Parse(userInfo.Unumber);
+                xmppClient.Name = userInfo.Unumber;
                 xmppClient.Password = userInfo.Passwd;
             }
         }
@@ -146,14 +146,16 @@ namespace XmppClient
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            int touser = 0;
-            if (!string.IsNullOrEmpty(textBox2.Text))
+            var touser = textBox2.Text; ;
+            if (string.IsNullOrEmpty(textBox2.Text))
             {
-                if (string.IsNullOrEmpty(textBox1.Text))
+                errorMsgLabel.Text = "请输入name";
+            }
+            else if (string.IsNullOrEmpty(textBox1.Text))
                 {
                     errorMsgLabel.Text = "请输入发送的消息";
                 }
-                else if (int.TryParse(textBox2.Text, out touser))
+                else 
                 {
                     if (xmppClient.IsLongined)
                     {
@@ -175,16 +177,9 @@ namespace XmppClient
                         errorMsgLabel.Text = "未登录或者链接错误";
                     }
                 }
-                else
-                {
-                    errorMsgLabel.Text = "请输入数字id";
-                }
+               
             }
-            else
-            {
-                errorMsgLabel.Text = "请输入接受者的id";
-            }
-        }
+           
 
         private void XmppClientForm_FormClosed(object sender, FormClosedEventArgs e)
         {
