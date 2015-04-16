@@ -9,8 +9,6 @@ using FileDownloadAndUpload.Core.Xmpp;
 using agsXMPP;
 using FileDownloadAndUpload.Core.Utils;
 using System.Data.Entity.Validation;
-using MongoDB.Driver;
-using MongoDB.Bson;
 namespace FileDownloadAndUpload.Core.Xmpp {
     public partial class XmppServer {
         public void OnMessage( XmppSeverConnection contextConnection, Message message ) {

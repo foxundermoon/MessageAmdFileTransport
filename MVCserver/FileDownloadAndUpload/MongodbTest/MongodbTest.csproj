@@ -72,16 +72,6 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Bson\MongoDB.Bson.csproj">
-      <Project>{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}</Project>
-      <Name>MongoDB.Bson</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Driver\MongoDB.Driver.csproj">
-      <Project>{ae5166cd-76b0-4911-bd80-ced9521f37a1}</Project>
-      <Name>MongoDB.Driver</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

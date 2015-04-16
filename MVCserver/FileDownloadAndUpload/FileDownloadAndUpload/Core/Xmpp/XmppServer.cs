@@ -8,12 +8,9 @@ using System.Net;
 using agsXMPP;
 using agsXMPP.protocol.client;
 using agsXMPP.Xml.Dom;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using System.Collections.Concurrent;
 using System.Configuration;
 using FileDownloadAndUpload.Core.Config;
-using MongoDB.Bson;
 using FileDownloadAndUpload.Core.Utils;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,8 +27,6 @@ namespace FileDownloadAndUpload.Core.Xmpp {
         //public event EventHandler<int> ConnectionEncrease;
         //public event EventHandler ConnectionDecrease;
         public static Jid ServerJid;
-        public MongoServer Mongo;
-        public MongoDatabase MongoDatabase;
         public Config.ServerConfig Config;
         public static XmppServer Instance {
             get {

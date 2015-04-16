@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Linq;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using System.Threading.Tasks;
 namespace FileDownloadAndUpload.Core.Account {
     public class AccountManage {

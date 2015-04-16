@@ -90,7 +90,6 @@
     <Compile Include="Core\Config\Config.cs" />
     <Compile Include="Core\Utils\EncryptUtil.cs" />
     <Compile Include="Core\Utils\HashHelper.cs" />
-    <Compile Include="Core\Utils\MongoUtil.cs" />
     <Compile Include="Core\Utils\MyMd5.cs" />
     <Compile Include="Core\Utils\MysqlHelper.cs" />
     <Compile Include="Core\Utils\TimeHelper.cs" />
@@ -130,18 +129,6 @@
     <Folder Include="UploadFiles\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Bson\MongoDB.Bson.csproj">
-      <Project>{0e9a3a2a-49cd-4f6c-847c-dc79b4b65ce6}</Project>
-      <Name>MongoDB.Bson</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\github\mongo-csharp-driver\MongoDB.Driver\MongoDB.Driver.csproj">
-      <Project>{ae5166cd-76b0-4911-bd80-ced9521f37a1}</Project>
-      <Name>MongoDB.Driver</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj">
-      <Project>{7a04da80-47c9-419c-800c-980b45e955cd}</Project>
-      <Name>FoxundermoonLib</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\agsxmpp\agsXMPP2010.csproj">
       <Project>{91ea0d0b-d3ba-497f-afeb-2cad59deba0e}</Project>
       <Name>agsXMPP2010</Name>

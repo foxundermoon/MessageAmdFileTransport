@@ -7,84 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileDownloadAndUpload", "Fi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "agsXMPP2010", "..\agsxmpp\agsXMPP2010.csproj", "{91EA0D0B-D3BA-497F-AFEB-2CAD59DEBA0E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLib", "..\..\..\Lib\FoxundermoonLib\FoxundermoonLib\FoxundermoonLib.csproj", "{7A04DA80-47C9-419C-800C-980B45E955CD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoxundermoonLibTests", "..\..\..\Lib\FoxundermoonLib\FoxundermoonLibTests\FoxundermoonLibTests.csproj", "{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongodbTest", "MongodbTest\MongodbTest.csproj", "{CECA7936-9746-4A6F-BB52-01F808CD7BF1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Bson", "..\..\..\..\github\mongo-csharp-driver\MongoDB.Bson\MongoDB.Bson.csproj", "{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.BsonUnitTests", "..\..\..\..\github\mongo-csharp-driver\MongoDB.BsonUnitTests\MongoDB.BsonUnitTests.csproj", "{10A5FAC2-E26F-4726-B888-26D5B849F805}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.Driver", "..\..\..\..\github\mongo-csharp-driver\MongoDB.Driver\MongoDB.Driver.csproj", "{AE5166CD-76B0-4911-BD80-CED9521F37A1}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDB.DriverUnitTests", "..\..\..\..\github\mongo-csharp-driver\MongoDB.DriverUnitTests\MongoDB.DriverUnitTests.csproj", "{FBBF0D71-107F-49C4-8858-B3A4DC24AA33}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{00502D63-7789-410D-B6BE-5F16327FF810}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\github\mongo-csharp-driver\CodeAnalysisRuleSet.ruleset = ..\..\..\..\github\mongo-csharp-driver\CodeAnalysisRuleSet.ruleset
-		..\..\..\..\github\mongo-csharp-driver\CustomDictionary.xml = ..\..\..\..\github\mongo-csharp-driver\CustomDictionary.xml
-		..\..\..\..\github\mongo-csharp-driver\GlobalAssemblyInfo.cs = ..\..\..\..\github\mongo-csharp-driver\GlobalAssemblyInfo.cs
-		..\..\..\..\github\mongo-csharp-driver\README.md = ..\..\..\..\github\mongo-csharp-driver\README.md
-		..\..\..\..\github\mongo-csharp-driver\uuidhelpers.js = ..\..\..\..\github\mongo-csharp-driver\uuidhelpers.js
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Release Notes", "Release Notes", "{AA4F6FD3-8844-4DF1-9944-0364C934B3F7}"
-	ProjectSection(SolutionItems) = preProject
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.1-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.1-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.1-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.1-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.2-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.2-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.2-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.4.2-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.5-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.5-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.5-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.5-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6.1-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6.1-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6.1-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.6.1-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.7-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.7-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.7-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.7-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.1-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.1-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.1-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.1-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.2-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.2-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.2-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.2-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.3-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.3-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.3-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.8.3-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.0-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.0-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.0-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.0-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.1-Bson.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.1-Bson.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.1-Driver.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Change Log v1.9.1-Driver.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.11.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.11.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.7.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.7.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.9.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v0.9.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.0.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.0.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.1.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.1.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.10.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.10.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.2.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.2.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.3.1.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.3.1.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.3.txt = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.3.txt
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.1.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.1.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.2.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.2.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.4.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.5.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.5.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.6.1.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.6.1.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.6.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.6.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.7.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.7.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.1.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.1.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.2.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.2.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.3.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.3.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.8.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.1.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.1.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.2.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.2.md
-		..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.md = ..\..\..\..\github\mongo-csharp-driver\Release Notes\Release Notes v1.9.md
-	EndProjectSection
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MongoDB.DriverUnitTestsVB", "..\..\..\..\github\mongo-csharp-driver\MongoDB.DriverUnitTestsVB\MongoDB.DriverUnitTestsVB.vbproj", "{19ED9AD5-A2CA-4F1B-9BE4-96450382F404}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,43 +21,8 @@ Global
 		{91EA0D0B-D3BA-497F-AFEB-2CAD59DEBA0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91EA0D0B-D3BA-497F-AFEB-2CAD59DEBA0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91EA0D0B-D3BA-497F-AFEB-2CAD59DEBA0E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7A04DA80-47C9-419C-800C-980B45E955CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7A04DA80-47C9-419C-800C-980B45E955CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7A04DA80-47C9-419C-800C-980B45E955CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7A04DA80-47C9-419C-800C-980B45E955CD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{72E8CB46-C7E9-4FB8-A15A-FFFE68B1AA64}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CECA7936-9746-4A6F-BB52-01F808CD7BF1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0E9A3A2A-49CD-4F6C-847C-DC79B4B65CE6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10A5FAC2-E26F-4726-B888-26D5B849F805}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10A5FAC2-E26F-4726-B888-26D5B849F805}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10A5FAC2-E26F-4726-B888-26D5B849F805}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10A5FAC2-E26F-4726-B888-26D5B849F805}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AE5166CD-76B0-4911-BD80-CED9521F37A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AE5166CD-76B0-4911-BD80-CED9521F37A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AE5166CD-76B0-4911-BD80-CED9521F37A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AE5166CD-76B0-4911-BD80-CED9521F37A1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FBBF0D71-107F-49C4-8858-B3A4DC24AA33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FBBF0D71-107F-49C4-8858-B3A4DC24AA33}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FBBF0D71-107F-49C4-8858-B3A4DC24AA33}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FBBF0D71-107F-49C4-8858-B3A4DC24AA33}.Release|Any CPU.Build.0 = Release|Any CPU
-		{19ED9AD5-A2CA-4F1B-9BE4-96450382F404}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{19ED9AD5-A2CA-4F1B-9BE4-96450382F404}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{19ED9AD5-A2CA-4F1B-9BE4-96450382F404}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{19ED9AD5-A2CA-4F1B-9BE4-96450382F404}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{AA4F6FD3-8844-4DF1-9944-0364C934B3F7} = {00502D63-7789-410D-B6BE-5F16327FF810}
 	EndGlobalSection
 EndGlobal
