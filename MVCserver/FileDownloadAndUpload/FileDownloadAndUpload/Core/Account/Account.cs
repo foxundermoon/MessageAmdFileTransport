@@ -14,7 +14,7 @@ namespace FileDownloadAndUpload.Core.Account {
             return instance;
         }
         public bool CheckAccount( string name, string password ) {
-            var sql = string.Format("SELECT * FROM `user` WHERE `name`='{0}' and `password`=Password('{1}')", name, password);
+            var sql = string.Format("SELECT * FROM `nj_用户表` WHERE `登录名`='{0}' and  `密码`='{1}'", name, password);
             return Core.Utils.MysqlHelper.ExecuteQueryHasRows(sql);
         }
     }
